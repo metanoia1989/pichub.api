@@ -3,12 +3,13 @@ package main
 import (
 	"time"
 
-	"github.com/spf13/viper"
 	"pichub.api/config"
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
 	"pichub.api/migrations"
 	"pichub.api/routers"
+
+	"github.com/spf13/viper"
 )
 
 func main() {
@@ -21,9 +22,9 @@ func main() {
 	if err := config.SetupConfig(); err != nil {
 		logger.Fatalf("config SetupConfig() error: %s", err)
 	}
-	masterDSN, replicaDSN := config.DbConfiguration()
+	masterDSN := config.DbConfiguration()
 
-	if err := database.DbConnection(masterDSN, replicaDSN); err != nil {
+	if err := database.DbConnection(masterDSN); err != nil {
 		logger.Fatalf("database DbConnection error: %s", err)
 	}
 	//later separate migration
