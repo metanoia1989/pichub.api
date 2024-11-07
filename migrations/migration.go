@@ -1,8 +1,8 @@
 package migrations
 
 import (
-	"gin-boilerplate/infra/database"
-	"gin-boilerplate/models"
+	"pichub.api/infra/database"
+	"pichub.api/models"
 )
 
 // Migrate Add list of model add for migrations

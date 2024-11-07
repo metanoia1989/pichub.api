@@ -140,7 +140,7 @@ router.Use(middleware.CORSMiddleware())
 </pre>
 
 ### Examples
-- More Example [gin-boilerplate-examples](https://github.com/akmamun/gin-boilerplate-examples)
+- More Example [pichub.api-examples](https://github.com/akmamun/pichub.api-examples)
 
 ### Let's Build an API
 
@@ -169,8 +169,8 @@ func (e *Example) TableName() string {
 package migrations
 
 import (
-	"gin-boilerplate/infra/database"
-	"gin-boilerplate/models"
+	"pichub.api/infra/database"
+	"pichub.api/models"
 )
 
 // Migrate Add list of model add for migrations
@@ -190,8 +190,8 @@ func Migrate() {
 package controllers
 
 import (
-  "gin-boilerplate/models"
-  "gin-boilerplate/repository"
+  "pichub.api/models"
+  "pichub.api/repository"
   "github.com/gin-gonic/gin"
   "net/http"
 )
@@ -213,7 +213,7 @@ func Create(ctx *gin.Context) {
 package routers
 
 import (
-  "gin-boilerplate/controllers"
+  "pichub.api/controllers"
   "github.com/gin-gonic/gin"
   "net/http"
 )

@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"gin-boilerplate/infra/database"
-	"gin-boilerplate/infra/logger"
+	"pichub.api/infra/database"
+	"pichub.api/infra/logger"
 )
 
 func Save(model interface{}) interface{} {

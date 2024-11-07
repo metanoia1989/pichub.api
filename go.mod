@@ -1,4 +1,4 @@
-module gin-boilerplate
+module pichub.api
 
 go 1.17
 

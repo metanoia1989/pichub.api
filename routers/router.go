@@ -1,9 +1,9 @@
 package routers
 
 import (
-	"gin-boilerplate/routers/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"pichub.api/routers/middleware"
 )
 
 func SetupRoute() *gin.Engine {
