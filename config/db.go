@@ -17,12 +17,12 @@ type DatabaseConfiguration struct {
 }
 
 func DbConfiguration() string {
-	masterDBName := viper.GetString("MASTER_DB_NAME")
-	masterDBUser := viper.GetString("MASTER_DB_USER")
-	masterDBPassword := viper.GetString("MASTER_DB_PASSWORD")
-	masterDBHost := viper.GetString("MASTER_DB_HOST")
-	masterDBPort := viper.GetString("MASTER_DB_PORT")
-	masterDBSslMode := viper.GetString("MASTER_SSL_MODE")
+	masterDBName := viper.GetString("DB_DATABASE")
+	masterDBUser := viper.GetString("DB_USERNAME")
+	masterDBPassword := viper.GetString("DB_PASSWORD")
+	masterDBHost := viper.GetString("DB_HOST")
+	masterDBPort := viper.GetString("DB_PORT")
+	masterDBSslMode := viper.GetString("DB_SSL_MODE")
 
 	masterDBDSN := fmt.Sprintf(
 		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",

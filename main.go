@@ -8,6 +8,7 @@ import (
 	"pichub.api/infra/logger"
 	"pichub.api/migrations"
 	"pichub.api/routers"
+	"pichub.api/services"
 
 	"github.com/spf13/viper"
 )
@@ -32,5 +33,8 @@ func main() {
 
 	router := routers.SetupRoute()
 	logger.Fatalf("%v", router.Run(config.ServerConfig()))
+
+	services.SchedulerService.StartScheduler()
+	defer services.SchedulerService.StopScheduler()
 
 }
