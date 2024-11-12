@@ -2,17 +2,21 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"log"
+
+	"github.com/spf13/viper"
 )
 
 type ServerConfiguration struct {
-	Port                 string
-	Secret               string
+	Host                 string `mapstructure:"SERVER_HOST"`
+	Port                 string `mapstructure:"SERVER_PORT"`
+	Secret               string `mapstructure:"JWT_SECRET"`
+	Debug                bool   `mapstructure:"APP_DEBUG"`
+	AllowedHosts         string `mapstructure:"ALLOWED_HOSTS"`
 	LimitCountPerRequest int64
 }
 
-func ServerConfig() string {
+func (s *ServerConfiguration) ServerConfig() string {
 	viper.SetDefault("SERVER_HOST", "0.0.0.0")
 	viper.SetDefault("SERVER_PORT", "8000")
 

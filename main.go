@@ -7,6 +7,7 @@ import (
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
 	"pichub.api/routers"
+	"pichub.api/services"
 
 	"github.com/spf13/viper"
 )
@@ -19,13 +20,17 @@ func main() {
 	time.Local = loc
 
 	// 加载配置，连接数据库
-	_, err := config.SetupConfig()
+	config, err := config.SetupConfig()
 	if err != nil {
 		logger.Fatalf("config SetupConfig() error: %s", err)
 	}
-	masterDSN := config.DbConfiguration()
 
-	if err := database.DbConnection(masterDSN); err != nil {
+	// 初始化各个服务
+	if err := services.InitRedis(); err != nil {
+		logger.Fatalf("redis connection error: %s", err)
+	}
+
+	if err := database.DbConnection(); err != nil {
 		logger.Fatalf("database DbConnection error: %s", err)
 	}
 
@@ -34,7 +39,7 @@ func main() {
 
 	// 设置路由
 	router := routers.SetupRoute()
-	logger.Fatalf("%v", router.Run(config.ServerConfig()))
+	logger.Fatalf("%v", router.Run(config.Server.ServerConfig()))
 
 	// 启动定时任务
 	// services.SchedulerService.StartScheduler()

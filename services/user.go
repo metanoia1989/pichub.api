@@ -10,11 +10,11 @@ import (
 	"pichub.api/utils/jwt"
 )
 
-type userService struct{}
+type UserServiceImpl struct{}
 
-var UserService = new(userService)
+var UserService = &UserServiceImpl{}
 
-func (s *userService) Register(req models.RegisterRequest) (*models.User, error) {
+func (s *UserServiceImpl) Register(req models.RegisterRequest) (*models.User, error) {
 	// 检查用户名是否已存在
 	var existingUser models.User
 	if result := database.DB.Where("username = ?", req.Username).First(&existingUser); result.Error == nil {
@@ -50,7 +50,7 @@ func (s *userService) Register(req models.RegisterRequest) (*models.User, error)
 	return user, nil
 }
 
-func (s *userService) Login(req models.LoginRequest) (string, *models.User, error) {
+func (s *UserServiceImpl) Login(req models.LoginRequest) (string, *models.User, error) {
 	var user models.User
 	if err := database.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
 		return "", nil, errors.New("user not found")
@@ -70,14 +70,14 @@ func (s *userService) Login(req models.LoginRequest) (string, *models.User, erro
 	return token, &user, nil
 }
 
-func (s *userService) ActivateAccount(token string) error {
+func (s *UserServiceImpl) ActivateAccount(token string) error {
 	// TODO: 实现账户激活逻辑
 	// 1. 验证激活token
 	// 2. 更新用户状态为已激活
 	return nil
 }
 
-func (s *userService) HasGithubToken(userID int) bool {
+func (s *UserServiceImpl) HasGithubToken(userID int) bool {
 	// TODO: 检查用户是否已添加 GitHub token
 	return false
 }

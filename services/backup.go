@@ -12,12 +12,12 @@ import (
 	"pichub.api/models"
 )
 
-type backupService struct{}
+type BackupServiceImpl struct{}
 
-var BackupService = &backupService{}
+var BackupService = &BackupServiceImpl{}
 
 // CreateBackup 创建数据库备份
-func (s *backupService) CreateBackup(repoID int) (*models.BackupRecord, error) {
+func (s *BackupServiceImpl) CreateBackup(repoID int) (*models.BackupRecord, error) {
 	// 获取备份配置
 	config := s.getBackupConfig()
 
@@ -81,7 +81,7 @@ func (s *backupService) CreateBackup(repoID int) (*models.BackupRecord, error) {
 }
 
 // compressFile 压缩文件
-func (s *backupService) compressFile(src, dst string) error {
+func (s *BackupServiceImpl) compressFile(src, dst string) error {
 	cmd := exec.Command("gzip", "-c", src)
 	outfile, err := os.Create(dst)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *backupService) compressFile(src, dst string) error {
 }
 
 // uploadToGitHub 上传文件到GitHub
-func (s *backupService) uploadToGitHub(repoID int, localPath, remotePath string) error {
+func (s *BackupServiceImpl) uploadToGitHub(repoID int, localPath, remotePath string) error {
 	// 获取仓库信息
 	var repo models.Repository
 	if err := database.DB.First(&repo, repoID).Error; err != nil {
@@ -113,7 +113,7 @@ func (s *backupService) uploadToGitHub(repoID int, localPath, remotePath string)
 }
 
 // getBackupConfig 获取备份配置
-func (s *backupService) getBackupConfig() models.BackupConfig {
+func (s *BackupServiceImpl) getBackupConfig() models.BackupConfig {
 	return models.BackupConfig{
 		BackupDir:    viper.GetString("BACKUP_DIR"),
 		DatabaseName: viper.GetString("DB_DATABASE"),
@@ -125,7 +125,7 @@ func (s *backupService) getBackupConfig() models.BackupConfig {
 }
 
 // CleanOldBackups 清理旧的备份记录
-func (s *backupService) CleanOldBackups(days int) error {
+func (s *BackupServiceImpl) CleanOldBackups(days int) error {
 	cutoff := time.Now().AddDate(0, 0, -days)
 	return database.DB.Where("created_at < ?", cutoff).Delete(&models.BackupRecord{}).Error
 }

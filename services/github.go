@@ -14,13 +14,13 @@ import (
 	"pichub.api/models"
 )
 
-type githubService struct {
+type GithubServiceImpl struct {
 	client *github.Client
 }
 
-var GithubService = &githubService{}
+var GithubService = &GithubServiceImpl{}
 
-func (s *githubService) getClient(token string) *github.Client {
+func (s *GithubServiceImpl) getClient(token string) *github.Client {
 	if token == "" {
 		token = viper.GetString("GITHUB_TOKEN")
 	}
@@ -34,7 +34,7 @@ func (s *githubService) getClient(token string) *github.Client {
 }
 
 // ValidateRepository 验证仓库是否存在且可访问
-func (s *githubService) ValidateRepository(repoURL string, token string) (owner, repo string, err error) {
+func (s *GithubServiceImpl) ValidateRepository(repoURL string, token string) (owner, repo string, err error) {
 	// 从URL中提取owner和repo名称
 	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
 	if len(parts) < 2 {
@@ -57,7 +57,7 @@ func (s *githubService) ValidateRepository(repoURL string, token string) (owner,
 }
 
 // InitializeRepository 初始化仓库数据
-func (s *githubService) InitializeRepository(repo *models.Repository, token string) error {
+func (s *GithubServiceImpl) InitializeRepository(repo *models.Repository, token string) error {
 	parts := strings.Split(strings.TrimSuffix(repo.RepoURL, "/"), "/")
 	owner := parts[len(parts)-2]
 	repoName := parts[len(parts)-1]
@@ -83,7 +83,7 @@ func (s *githubService) InitializeRepository(repo *models.Repository, token stri
 }
 
 // processContent 递归处理仓库内容
-func (s *githubService) processContent(ctx context.Context, client *github.Client, owner, repoName string, content *github.RepositoryContent, repo *models.Repository) error {
+func (s *GithubServiceImpl) processContent(ctx context.Context, client *github.Client, owner, repoName string, content *github.RepositoryContent, repo *models.Repository) error {
 	if *content.Type == "dir" {
 		// 如果是目录，递归处理
 		opts := &github.RepositoryContentGetOptions{}
@@ -115,7 +115,7 @@ func (s *githubService) processContent(ctx context.Context, client *github.Clien
 }
 
 // UploadFile 上传文件到GitHub仓库
-func (s *githubService) UploadFile(repoURL string, remotePath string, file io.Reader) error {
+func (s *GithubServiceImpl) UploadFile(repoURL string, remotePath string, file io.Reader) error {
 	// 从URL中提取owner和repo名称
 	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
 	owner := parts[len(parts)-2]

@@ -7,6 +7,8 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
+	"pichub.api/config"
 )
 
 var (
@@ -15,7 +17,7 @@ var (
 )
 
 // DbConnection create database connection
-func DbConnection(masterDSN string) error {
+func DbConnection() error {
 	var db = DB
 
 	logMode := viper.GetBool("DB_LOG_MODE")
@@ -25,9 +27,14 @@ func DbConnection(masterDSN string) error {
 		loglevel = logger.Info
 	}
 
-	db, err = gorm.Open(mysql.Open(masterDSN), &gorm.Config{
+	var dbConfig = config.Config.Database
+
+	db, err = gorm.Open(mysql.Open(dbConfig.DSN()), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true, // 禁用外键约束
 		Logger:                                   logger.Default.LogMode(loglevel),
+		NamingStrategy: schema.NamingStrategy{
+			TablePrefix: dbConfig.Prefix,
+		},
 	})
 
 	if err != nil {

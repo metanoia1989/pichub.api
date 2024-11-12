@@ -8,16 +8,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-type schedulerService struct {
+type SchedulerServiceImpl struct {
 	cron *cron.Cron
 }
 
-var SchedulerService = &schedulerService{
+var SchedulerService = &SchedulerServiceImpl{
 	cron: cron.New(cron.WithLocation(time.Local)),
 }
 
 // StartScheduler 启动定时任务调度器
-func (s *schedulerService) StartScheduler() {
+func (s *SchedulerServiceImpl) StartScheduler() {
 	// 添加数据库备份任务
 	backupSchedule := viper.GetString("BACKUP_SCHEDULE")
 	if backupSchedule == "" {
@@ -53,7 +53,7 @@ func (s *schedulerService) StartScheduler() {
 }
 
 // StopScheduler 停止定时任务调度器
-func (s *schedulerService) StopScheduler() {
+func (s *SchedulerServiceImpl) StopScheduler() {
 	if s.cron != nil {
 		s.cron.Stop()
 	}

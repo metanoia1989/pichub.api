@@ -13,12 +13,12 @@ import (
 	"pichub.api/models"
 )
 
-type webhookService struct{}
+type WebhookServiceImpl struct{}
 
-var WebhookService = &webhookService{}
+var WebhookService = &WebhookServiceImpl{}
 
 // ValidateSignature 验证 webhook 签名
-func (s *webhookService) ValidateSignature(payload []byte, signature string) bool {
+func (s *WebhookServiceImpl) ValidateSignature(payload []byte, signature string) bool {
 	secret := []byte(viper.GetString("GITHUB_WEBHOOK_SECRET"))
 
 	// 计算 HMAC
@@ -31,7 +31,7 @@ func (s *webhookService) ValidateSignature(payload []byte, signature string) boo
 }
 
 // HandlePush 处理 push 事件
-func (s *webhookService) HandlePush(payload *models.WebhookPayload) error {
+func (s *WebhookServiceImpl) HandlePush(payload *models.WebhookPayload) error {
 	// 只处理 master 分支的推送
 	if !strings.HasSuffix(payload.Ref, "master") {
 		return nil
@@ -67,7 +67,7 @@ func (s *webhookService) HandlePush(payload *models.WebhookPayload) error {
 }
 
 // handleAddedFiles 处理新增文件
-func (s *webhookService) handleAddedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
+func (s *WebhookServiceImpl) handleAddedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
 	for _, filePath := range files {
 		// 只处理 files 目录下的文件
 		if !strings.HasPrefix(filePath, "files/") {
@@ -90,7 +90,7 @@ func (s *webhookService) handleAddedFiles(tx *gorm.DB, files []string, repo *mod
 }
 
 // handleRemovedFiles 处理删除文件
-func (s *webhookService) handleRemovedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
+func (s *WebhookServiceImpl) handleRemovedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
 	for _, filePath := range files {
 		if !strings.HasPrefix(filePath, "files/") {
 			continue
@@ -106,7 +106,7 @@ func (s *webhookService) handleRemovedFiles(tx *gorm.DB, files []string, repo *m
 }
 
 // handleModifiedFiles 处理修改文件
-func (s *webhookService) handleModifiedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
+func (s *WebhookServiceImpl) handleModifiedFiles(tx *gorm.DB, files []string, repo *models.Repository) error {
 	for _, filePath := range files {
 		if !strings.HasPrefix(filePath, "files/") {
 			continue

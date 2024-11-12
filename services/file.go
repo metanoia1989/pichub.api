@@ -19,12 +19,12 @@ import (
 	"pichub.api/models"
 )
 
-type fileService struct{}
+type FileServiceImpl struct{}
 
-var FileService = &fileService{}
+var FileService = &FileServiceImpl{}
 
 // UploadFile 处理文件上传
-func (s *fileService) UploadFile(file *multipart.FileHeader, userID int, repoID int, isForce bool) (*models.File, error) {
+func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, repoID int, isForce bool) (*models.File, error) {
 	// 打开文件
 	src, err := file.Open()
 	if err != nil {

@@ -6,24 +6,25 @@ import (
 
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
+	"pichub.api/config"
 	"pichub.api/models"
 	"pichub.api/utils/jwt"
 )
 
-type emailService struct {
+type EmailServiceImpl struct {
 	dialer *gomail.Dialer
 }
 
-var EmailService = &emailService{
+var EmailService = &EmailServiceImpl{
 	dialer: gomail.NewDialer(
-		viper.GetString("SMTP_HOST"),
-		viper.GetInt("SMTP_PORT"),
-		viper.GetString("SMTP_USER"),
-		viper.GetString("SMTP_PASSWORD"),
+		config.Config.Email.Host,
+		config.Config.Email.Port,
+		config.Config.Email.Username,
+		config.Config.Email.Password,
 	),
 }
 
-func (s *emailService) SendActivationEmail(user *models.User) error {
+func (s *EmailServiceImpl) SendActivationEmail(user *models.User) error {
 	// 生成激活token，有效期24小时
 	claims := jwt.Claims{
 		UserID:   user.ID,

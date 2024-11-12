@@ -7,16 +7,17 @@ import (
 )
 
 type DatabaseConfiguration struct {
-	Driver   string
-	Dbname   string
-	Username string
-	Password string
-	Host     string
-	Port     string
+	Driver   string `mapstructure:"DB_DRIVER"`
+	Dbname   string `mapstructure:"DB_DATABASE"`
+	Username string `mapstructure:"DB_USERNAME"`
+	Password string `mapstructure:"DB_PASSWORD"`
+	Host     string `mapstructure:"DB_HOST"`
+	Port     string `mapstructure:"DB_PORT"`
+	Prefix   string `mapstructure:"DB_PREFIX"`
 	LogMode  bool
 }
 
-func DbConfiguration() string {
+func (d *DatabaseConfiguration) DSN() string {
 	masterDBName := viper.GetString("DB_DATABASE")
 	masterDBUser := viper.GetString("DB_USERNAME")
 	masterDBPassword := viper.GetString("DB_PASSWORD")
