@@ -6,21 +6,21 @@ import (
 	"pichub.api/config"
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
-	"pichub.api/migrations"
 	"pichub.api/routers"
-	"pichub.api/services"
 
 	"github.com/spf13/viper"
 )
 
 func main() {
 
-	//set timezone
-	viper.SetDefault("SERVER_TIMEZONE", "Asia/Dhaka")
+	//set timezone 设置时区
+	viper.SetDefault("SERVER_TIMEZONE", "Asia/Shanghai")
 	loc, _ := time.LoadLocation(viper.GetString("SERVER_TIMEZONE"))
 	time.Local = loc
 
-	if err := config.SetupConfig(); err != nil {
+	// 加载配置，连接数据库
+	_, err := config.SetupConfig()
+	if err != nil {
 		logger.Fatalf("config SetupConfig() error: %s", err)
 	}
 	masterDSN := config.DbConfiguration()
@@ -28,13 +28,16 @@ func main() {
 	if err := database.DbConnection(masterDSN); err != nil {
 		logger.Fatalf("database DbConnection error: %s", err)
 	}
-	//later separate migration
-	migrations.Migrate()
 
+	//later separate migration，不迁移，直接使用sql语句来操作表结构即可
+	// migrations.Migrate()
+
+	// 设置路由
 	router := routers.SetupRoute()
 	logger.Fatalf("%v", router.Run(config.ServerConfig()))
 
-	services.SchedulerService.StartScheduler()
-	defer services.SchedulerService.StopScheduler()
+	// 启动定时任务
+	// services.SchedulerService.StartScheduler()
+	// defer services.SchedulerService.StopScheduler()
 
 }

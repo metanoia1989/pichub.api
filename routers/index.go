@@ -49,7 +49,8 @@ func RegisterRoutes(route *gin.Engine) {
 			}
 		}
 
-		// 在 v1 路由组中添加
+		// 其他的公开路由
+		// 处理 github webhook 请求
 		v1.POST("/webhook/github", controllers.GithubWebhook)
 	}
 }

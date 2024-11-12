@@ -26,7 +26,8 @@ func DbConnection(masterDSN string) error {
 	}
 
 	db, err = gorm.Open(mysql.Open(masterDSN), &gorm.Config{
-		Logger: logger.Default.LogMode(loglevel),
+		DisableForeignKeyConstraintWhenMigrating: true, // 禁用外键约束
+		Logger:                                   logger.Default.LogMode(loglevel),
 	})
 
 	if err != nil {

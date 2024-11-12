@@ -2,3 +2,23 @@
 
 提供一个上传图片到Github仓库的API
 
+通过下面的步骤来运行这个程序 
+```bash
+# 填写配置项 
+$ cp .env.exmaple .env # 然后修改必要的配置项 
+
+# 安装依赖  
+$ go get .  # 仅安装依赖，不更新依赖包  
+$ go get -u . # 安装依赖，并且更新依赖包 
+# -u 标志表示更新所有的依赖项到最新的次要版本或修补版本（minor or patch version）
+
+# 运行程序 
+$ go run main.go 
+
+# 访问服务状态 
+$ curl http://localhost:8000/health
+
+# 打包编译程序 
+$ go build main.go 
+$ ./main
+```

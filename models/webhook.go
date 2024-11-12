@@ -1,9 +1,9 @@
 package models
 
 type WebhookPayload struct {
-	Ref        string     `json:"ref"`
-	Repository Repository `json:"repository"`
-	Commits    []Commit   `json:"commits"`
+	Ref        string            `json:"ref"`
+	Repository WebhookRepository `json:"repository"`
+	Commits    []Commit          `json:"commits"`
 }
 
 type Commit struct {

@@ -22,11 +22,10 @@ func DbConfiguration() string {
 	masterDBPassword := viper.GetString("DB_PASSWORD")
 	masterDBHost := viper.GetString("DB_HOST")
 	masterDBPort := viper.GetString("DB_PORT")
-	masterDBSslMode := viper.GetString("DB_SSL_MODE")
 
 	masterDBDSN := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s",
-		masterDBHost, masterDBUser, masterDBPassword, masterDBName, masterDBPort, masterDBSslMode,
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		masterDBUser, masterDBPassword, masterDBHost, masterDBPort, masterDBName,
 	)
 
 	return masterDBDSN

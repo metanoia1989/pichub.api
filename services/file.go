@@ -4,6 +4,10 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"image"
+	_ "image/gif"  // 注册GIF格式
+	_ "image/jpeg" // 注册JPEG格式
+	_ "image/png"  // 注册PNG格式
 	"io"
 	"mime/multipart"
 	"path/filepath"
@@ -133,4 +137,18 @@ func buildFilePath(filename string) string {
 // buildFileURL 构建文件访问URL
 func buildFileURL(repoURL, filePath string) string {
 	return fmt.Sprintf("%s/raw/master/%s", repoURL, filePath)
+}
+
+// getImageDimensions 获取图片尺寸
+func getImageDimensions(file multipart.File) (int, int, error) {
+	// 重置文件指针到开始位置
+	file.Seek(0, 0)
+
+	// 解码图片
+	img, _, err := image.DecodeConfig(file)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return img.Width, img.Height, nil
 }

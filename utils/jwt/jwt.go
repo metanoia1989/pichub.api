@@ -14,6 +14,13 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// 添加一些辅助函数
+func NewNumericDate(t time.Time) *jwt.NumericDate {
+	return jwt.NewNumericDate(t)
+}
+
+type RegisteredClaims = jwt.RegisteredClaims
+
 // GenerateToken 生成JWT token
 func GenerateToken(userID int, username string) (string, error) {
 	// 从配置中获取 JWT 密钥和过期时间

@@ -3,11 +3,14 @@ package services
 import (
 	"context"
 	"fmt"
+	"io"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v65/github"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
+	"pichub.api/infra/database"
 	"pichub.api/models"
 )
 
@@ -104,9 +107,41 @@ func (s *githubService) processContent(ctx context.Context, client *github.Clien
 		}
 
 		// 保存文件记录
-		if err := DB.Create(file).Error; err != nil {
+		if err := database.DB.Create(file).Error; err != nil {
 			return fmt.Errorf("failed to save file record: %v", err)
 		}
 	}
+	return nil
+}
+
+// UploadFile 上传文件到GitHub仓库
+func (s *githubService) UploadFile(repoURL string, remotePath string, file io.Reader) error {
+	// 从URL中提取owner和repo名称
+	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
+	owner := parts[len(parts)-2]
+	repo := parts[len(parts)-1]
+
+	// 读取文件内容
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return fmt.Errorf("failed to read file: %v", err)
+	}
+
+	// 准备文件上传参数
+	opts := &github.RepositoryContentFileOptions{
+		Message: github.String(fmt.Sprintf("Upload backup file: %s", filepath.Base(remotePath))),
+		Content: content,
+		// Branch:  github.String("main"), // 指定上传分支，可忽略
+	}
+
+	client := s.getClient("")
+	ctx := context.Background()
+
+	// 上传文件
+	_, _, err = client.Repositories.CreateFile(ctx, owner, repo, remotePath, opts)
+	if err != nil {
+		return fmt.Errorf("failed to upload file to GitHub: %v", err)
+	}
+
 	return nil
 }

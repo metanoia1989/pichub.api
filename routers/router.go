@@ -6,9 +6,12 @@ import (
 	"pichub.api/routers/middleware"
 )
 
+/**
+ * 初始化 gin 实例，然后注册路由
+ */
 func SetupRoute() *gin.Engine {
 
-	environment := viper.GetBool("DEBUG")
+	environment := viper.GetBool("APP_DEBUG")
 	if environment {
 		gin.SetMode(gin.DebugMode)
 	} else {
