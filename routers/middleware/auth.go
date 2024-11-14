@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"pichub.api/utils/jwt"
+	"pichub.api/pkg/jwt"
 )
 
 func AuthRequired() gin.HandlerFunc {

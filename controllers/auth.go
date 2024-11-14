@@ -4,26 +4,36 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"pichub.api/infra/logger"
 	"pichub.api/models"
+	"pichub.api/pkg/validator"
 	"pichub.api/services"
 )
 
 func Register(c *gin.Context) {
 	var req models.RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
-	user, err := services.UserService.Register(req)
+	// user, err := services.UserService.Register(req)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	ID := 3
+	user, err := services.UserService.GetUserByID(ID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user: " + err.Error()})
 		return
 	}
 
 	// 发送激活邮件
 	if err := services.EmailService.SendActivationEmail(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send activation email"})
+		logger.Errorf("Failed to send activation email: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send activation email: " + err.Error()})
 		return
 	}
 
@@ -35,7 +45,7 @@ func Register(c *gin.Context) {
 
 func Login(c *gin.Context) {
 	var req models.LoginRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -48,7 +58,7 @@ func Login(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"token": token,
-		"user":  user,
+		"user":  user.ToBaseInfo(),
 	})
 }
 

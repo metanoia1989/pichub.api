@@ -1,9 +1,5 @@
 package config
 
-import (
-	"github.com/spf13/viper"
-)
-
 type RedisConfiguration struct {
 	Host     string `mapstructure:"REDIS_HOST"`
 	Port     string `mapstructure:"REDIS_PORT"`
@@ -12,5 +8,5 @@ type RedisConfiguration struct {
 }
 
 func (r *RedisConfiguration) RedisConfig() string {
-	return viper.GetString("REDIS_HOST") + ":" + viper.GetString("REDIS_PORT")
+	return r.Host + ":" + r.Port
 }

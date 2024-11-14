@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// file 表结构
 type File struct {
 	ID          int        `json:"id" gorm:"primaryKey"`
 	RepoID      int        `json:"repo_id" gorm:"not null"`
@@ -20,6 +21,8 @@ type File struct {
 	Repository  Repository `json:"-" gorm:"foreignKey:RepoID"`
 	User        User       `json:"-" gorm:"foreignKey:UserID"`
 }
+
+// 其他结构体
 
 type FileResponse struct {
 	ID          int       `json:"id"`

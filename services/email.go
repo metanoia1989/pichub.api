@@ -2,28 +2,66 @@ package services
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
-	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
 	"pichub.api/config"
 	"pichub.api/models"
-	"pichub.api/utils/jwt"
+	"pichub.api/pkg/jwt"
 )
 
 type EmailServiceImpl struct {
 	dialer *gomail.Dialer
+	once   sync.Once
 }
 
-var EmailService = &EmailServiceImpl{
-	dialer: gomail.NewDialer(
-		config.Config.Email.Host,
-		config.Config.Email.Port,
-		config.Config.Email.Username,
-		config.Config.Email.Password,
-	),
+var EmailService = &EmailServiceImpl{}
+
+type EmailRequest struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+	To      string `json:"to"`
 }
 
+// getDialer 获取邮件发送器
+func (s *EmailServiceImpl) getDialer() *gomail.Dialer {
+	s.once.Do(func() {
+		s.dialer = gomail.NewDialer(
+			config.Config.Email.Host,
+			config.Config.Email.Port,
+			config.Config.Email.Username,
+			config.Config.Email.Password,
+		)
+	})
+	return s.dialer
+}
+
+// 发送邮件
+func (s *EmailServiceImpl) SendEmail(req *EmailRequest) error {
+
+	// 创建邮件
+	m := gomail.NewMessage()
+	m.SetHeader("From", config.Config.Email.FromAddress)
+	m.SetAddressHeader("From", config.Config.Email.FromAddress, config.Config.Email.FromName)
+	m.SetHeader("To", req.To)
+	m.SetHeader("Subject", req.Subject)
+
+	m.SetBody("text/html", req.Body)
+
+	// 使用 getDialer() 替代直接创建 dialer
+	if err := s.getDialer().DialAndSend(m); err != nil {
+		return fmt.Errorf("send email failed (host=%s, port=%d): %w",
+			config.Config.Email.Host,
+			config.Config.Email.Port,
+			err,
+		)
+	}
+
+	return nil
+}
+
+// 发送激活邮件
 func (s *EmailServiceImpl) SendActivationEmail(user *models.User) error {
 	// 生成激活token，有效期24小时
 	claims := jwt.Claims{
@@ -40,16 +78,11 @@ func (s *EmailServiceImpl) SendActivationEmail(user *models.User) error {
 	}
 
 	// 构建激活链接
-	activationLink := fmt.Sprintf("%s/activate?token=%s",
-		viper.GetString("FRONTEND_URL"),
+	// TODO 暂时使用api地址，后续需要使用web地址
+	activationLink := fmt.Sprintf("%s/api/v1/auth/activate?token=%s",
+		config.Config.Server.GetFrontendUrl(),
 		token,
 	)
-
-	// 创建邮件
-	m := gomail.NewMessage()
-	m.SetHeader("From", viper.GetString("SMTP_FROM"))
-	m.SetHeader("To", user.Email)
-	m.SetHeader("Subject", "激活您的账户")
 
 	// 邮件内容
 	body := fmt.Sprintf(`
@@ -65,12 +98,9 @@ func (s *EmailServiceImpl) SendActivationEmail(user *models.User) error {
 		<p>PicHub 团队</p>
 	`, user.Nickname, activationLink, activationLink)
 
-	m.SetBody("text/html", body)
-
-	// 发送邮件
-	if err := s.dialer.DialAndSend(m); err != nil {
-		return fmt.Errorf("send email failed: %w", err)
-	}
-
-	return nil
+	return s.SendEmail(&EmailRequest{
+		Subject: "激活您的账户",
+		Body:    body,
+		To:      user.Email,
+	})
 }

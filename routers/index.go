@@ -23,6 +23,7 @@ func RegisterRoutes(route *gin.Engine) {
 		{
 			auth.POST("/register", controllers.Register)
 			auth.POST("/login", controllers.Login)
+			auth.GET("/activate", controllers.ActivateAccount)
 			auth.POST("/activate", controllers.ActivateAccount)
 		}
 
@@ -38,6 +39,8 @@ func RegisterRoutes(route *gin.Engine) {
 			{
 				repo.POST("/", controllers.AddRepository)
 				repo.GET("/", controllers.ListRepositories)
+				repo.GET("/:id", controllers.GetRepository)
+				repo.POST("/:id", controllers.UpdateRepository)
 				repo.POST("/:id/init", controllers.InitRepository)
 			}
 

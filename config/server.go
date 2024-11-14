@@ -2,9 +2,8 @@ package config
 
 import (
 	"fmt"
-	"log"
 
-	"github.com/spf13/viper"
+	"pichub.api/infra/logger"
 )
 
 type ServerConfiguration struct {
@@ -13,14 +12,19 @@ type ServerConfiguration struct {
 	Secret               string `mapstructure:"JWT_SECRET"`
 	Debug                bool   `mapstructure:"APP_DEBUG"`
 	AllowedHosts         string `mapstructure:"ALLOWED_HOSTS"`
-	LimitCountPerRequest int64
+	LimitCountPerRequest int    `mapstructure:"LIMIT_COUNT_PER_REQUEST"`
+	FrontendUrl          string `mapstructure:"FRONTEND_URL"`
 }
 
 func (s *ServerConfiguration) ServerConfig() string {
-	viper.SetDefault("SERVER_HOST", "0.0.0.0")
-	viper.SetDefault("SERVER_PORT", "8000")
-
-	appServer := fmt.Sprintf("%s:%s", viper.GetString("SERVER_HOST"), viper.GetString("SERVER_PORT"))
-	log.Print("Server Running at :", appServer)
+	appServer := fmt.Sprintf("%s:%s", s.Host, s.Port)
+	logger.Infof("Server Running at : %s", appServer)
 	return appServer
+}
+
+func (s *ServerConfiguration) GetFrontendUrl() string {
+	if s.FrontendUrl == "" {
+		return fmt.Sprintf("http://%s:%s", s.Host, s.Port)
+	}
+	return s.FrontendUrl
 }

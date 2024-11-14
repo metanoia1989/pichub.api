@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"pichub.api/infra/database"
 	"pichub.api/models"
-	"pichub.api/utils/jwt"
+	"pichub.api/pkg/jwt"
 )
 
 type UserServiceImpl struct{}
@@ -34,13 +34,15 @@ func (s *UserServiceImpl) Register(req models.RegisterRequest) (*models.User, er
 
 	// 创建新用户
 	user := &models.User{
-		Username:     req.Username,
-		Nickname:     req.Nickname,
-		Email:        req.Email,
+		UserBaseInfo: models.UserBaseInfo{
+			Username:  req.Username,
+			Nickname:  req.Nickname,
+			Email:     req.Email,
+			UserType:  1, // 普通用户类型
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
 		PasswordHash: string(hashedPassword),
-		UserType:     1, // 普通用户类型
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
 	}
 
 	if err := database.DB.Create(user).Error; err != nil {
@@ -80,4 +82,12 @@ func (s *UserServiceImpl) ActivateAccount(token string) error {
 func (s *UserServiceImpl) HasGithubToken(userID int) bool {
 	// TODO: 检查用户是否已添加 GitHub token
 	return false
+}
+
+func (s *UserServiceImpl) GetUserByID(userID int) (*models.User, error) {
+	var user models.User
+	if err := database.DB.Where("id = ?", userID).First(&user).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

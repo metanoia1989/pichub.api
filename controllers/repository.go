@@ -102,3 +102,75 @@ func ListRepositories(c *gin.Context) {
 		"repositories": response,
 	})
 }
+
+// GetRepository 获取仓库信息
+func GetRepository(c *gin.Context) {
+	userID, _ := middleware.GetCurrentUser(c)
+	repoID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
+		return
+	}
+
+	var repository models.Repository
+	if err := database.DB.Where("id = ? AND user_id = ?", repoID, userID).First(&repository).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Repository not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"repository": models.RepositoryResponse{
+			ID:        repository.ID,
+			RepoName:  repository.RepoName,
+			RepoURL:   repository.RepoURL,
+			CreatedAt: repository.CreatedAt,
+		},
+	})
+}
+
+// UpdateRepository 更新仓库信息
+func UpdateRepository(c *gin.Context) {
+	userID, _ := middleware.GetCurrentUser(c)
+	repoID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
+		return
+	}
+
+	var req models.UpdateRepositoryRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 验证仓库
+	owner, repo, err := services.GithubService.ValidateRepository(req.RepoURL, "")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 更新仓库信息
+	updates := map[string]interface{}{
+		"repo_name": owner + "/" + repo,
+		"repo_url":  req.RepoURL,
+	}
+
+	result := database.DB.Model(&models.Repository{}).
+		Where("id = ? AND user_id = ?", repoID, userID).
+		Updates(updates)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update repository"})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Repository not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Repository updated successfully",
+	})
+}

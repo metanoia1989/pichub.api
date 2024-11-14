@@ -2,6 +2,7 @@ package models
 
 import "time"
 
+// config 表结构
 type Config struct {
 	ID        int       `gorm:"primaryKey;column:id"`
 	UserID    int       `gorm:"column:user_id;default:0"`

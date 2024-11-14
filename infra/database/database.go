@@ -29,6 +29,7 @@ func DbConnection() error {
 
 	var dbConfig = config.Config.Database
 
+	// log.Printf("dbConfig %+v", dbConfig)
 	db, err = gorm.Open(mysql.Open(dbConfig.DSN()), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true, // 禁用外键约束
 		Logger:                                   logger.Default.LogMode(loglevel),

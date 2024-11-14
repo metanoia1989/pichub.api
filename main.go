@@ -6,6 +6,7 @@ import (
 	"pichub.api/config"
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
+	"pichub.api/pkg/validator"
 	"pichub.api/routers"
 	"pichub.api/services"
 
@@ -32,6 +33,11 @@ func main() {
 
 	if err := database.DbConnection(); err != nil {
 		logger.Fatalf("database DbConnection error: %s", err)
+	}
+
+	// 初始化验证器翻译器
+	if err := validator.InitTrans(); err != nil {
+		panic(err)
 	}
 
 	//later separate migration，不迁移，直接使用sql语句来操作表结构即可
