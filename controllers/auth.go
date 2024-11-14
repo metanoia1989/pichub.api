@@ -17,18 +17,18 @@ func Register(c *gin.Context) {
 		return
 	}
 
-	// user, err := services.UserService.Register(req)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	// 	return
-	// }
-
-	ID := 3
-	user, err := services.UserService.GetUserByID(ID)
+	user, err := services.UserService.Register(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	// ID := 3
+	// user, err := services.UserService.GetUserByID(ID)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user: " + err.Error()})
+	// 	return
+	// }
 
 	// 发送激活邮件
 	if err := services.EmailService.SendActivationEmail(user); err != nil {

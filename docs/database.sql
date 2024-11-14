@@ -5,6 +5,7 @@ CREATE TABLE pic_users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     user_type tinyint(1) unsigned not null default 0 comment '用户类型: 0,普通用户; 1,超级管理员',
+    status  tinyint(1) unsigned not null default 0 comment '是否激活: 0,未激活; 1,已激活',
     deleted_at TIMESTAMP NULL COMMENT '软删除标记',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

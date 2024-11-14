@@ -35,6 +35,17 @@ func RegisterRoutes(route *gin.Engine) {
 			// 例如：
 			// protected.GET("/user/profile", controllers.GetUserProfile)
 			// protected.POST("/repositories", controllers.AddRepository)
+
+			user := protected.Group("/user")
+			{
+				user.GET("/profile", controllers.GetUserProfile)
+				user.POST("/profile", controllers.UpdateUserProfile)
+				user.GET("/github_token", controllers.CheckGithubToken)
+				user.POST("/github_token", controllers.UpdateGithubToken)
+				user.POST("/email", controllers.UpdateEmail)
+				user.POST("/email/verification", controllers.SendEmailVerification)
+			}
+
 			repo := protected.Group("/repositories")
 			{
 				repo.POST("/", controllers.AddRepository)

@@ -14,6 +14,7 @@ type UserBaseInfo struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
+	Status    uint8      `json:"status"`
 }
 
 // user 表结构
@@ -33,6 +34,7 @@ func (u *User) ToBaseInfo() *UserBaseInfo {
 		DeletedAt: u.DeletedAt,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
+		Status:    u.Status,
 	}
 }
 
@@ -47,4 +49,24 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	Username string `json:"username" form:"username" label:"用户名" binding:"required"`
 	Password string `json:"password" form:"password" label:"密码" binding:"required"`
+}
+
+type UpdateProfileRequest struct {
+	Nickname    string `json:"nickname" form:"nickname" label:"昵称" binding:"omitempty,min=2,max=32"`
+	Username    string `json:"username" form:"username" label:"用户名" binding:"omitempty,min=3,max=32"`
+	OldPassword string `json:"old_password" form:"old_password" label:"旧密码"`
+	NewPassword string `json:"new_password" form:"new_password" label:"新密码" binding:"omitempty,min=6"`
+}
+
+type UpdateGithubTokenRequest struct {
+	Token string `json:"token" form:"token" label:"Github Token" binding:"required"`
+}
+
+type SendEmailVerificationRequest struct {
+	NewEmail string `json:"new_email" form:"new_email" label:"新邮箱" binding:"required,email"`
+}
+
+type UpdateEmailRequest struct {
+	NewEmail string `json:"new_email" form:"new_email" label:"新邮箱" binding:"required,email"`
+	Code     string `json:"code" form:"code" label:"验证码" binding:"required,len=6"`
 }

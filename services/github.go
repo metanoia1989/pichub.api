@@ -145,3 +145,29 @@ func (s *GithubServiceImpl) UploadFile(repoURL string, remotePath string, file i
 
 	return nil
 }
+
+// ValidateToken 验证 GitHub token 是否有效
+func (s *GithubServiceImpl) ValidateToken(token string) (bool, error) {
+	if token == "" {
+		return false, fmt.Errorf("token is empty")
+	}
+
+	client := s.getClient(token)
+	ctx := context.Background()
+
+	// 尝试获取用户信息来验证 token
+	user, resp, err := client.Users.Get(ctx, "")
+	if err != nil {
+		if resp != nil && resp.StatusCode == 401 {
+			return false, fmt.Errorf("invalid token")
+		}
+		return false, fmt.Errorf("failed to validate token: %v", err)
+	}
+
+	// 确保获取到用户信息
+	if user == nil || user.Login == nil {
+		return false, fmt.Errorf("failed to get user info")
+	}
+
+	return true, nil
+}
