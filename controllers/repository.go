@@ -5,38 +5,34 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"pichub.api/infra/database"
+	"pichub.api/constants"
+	"pichub.api/infra/logger"
 	"pichub.api/models"
+	"pichub.api/pkg/validator"
 	"pichub.api/routers/middleware"
 	"pichub.api/services"
 )
 
 // AddRepository 添加新的GitHub仓库
 func AddRepository(c *gin.Context) {
+	logger.Infof("Received request body: %v", c.Request.Body)
 	userID, _ := middleware.GetCurrentUser(c)
 
 	var req models.AddRepositoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
-	// 验证仓库
-	owner, repo, err := services.GithubService.ValidateRepository(req.RepoURL, "")
+	logger.Infof("AddRepository%s", "测试")
+
+	if req.RepoBranch == "" {
+		req.RepoBranch = constants.DefaultRepoBranch
+	}
+
+	repository, err := services.RepositoryService.AddRepository(userID, req.RepoName, req.RepoURL, req.RepoBranch)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 创建仓库记录
-	repository := &models.Repository{
-		UserID:   userID,
-		RepoName: owner + "/" + repo,
-		RepoURL:  req.RepoURL,
-	}
-
-	if err := database.DB.Create(repository).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save repository"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -60,15 +56,8 @@ func InitRepository(c *gin.Context) {
 		return
 	}
 
-	// 获取仓库信息
-	var repository models.Repository
-	if err := database.DB.Where("id = ? AND user_id = ?", repoID, userID).First(&repository).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Repository not found"})
-		return
-	}
-
-	// 初始化仓库数据
-	if err := services.GithubService.InitializeRepository(&repository, ""); err != nil {
+	_, err = services.RepositoryService.InitRepository(userID, repoID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -82,8 +71,8 @@ func InitRepository(c *gin.Context) {
 func ListRepositories(c *gin.Context) {
 	userID, _ := middleware.GetCurrentUser(c)
 
-	var repositories []models.Repository
-	if err := database.DB.Where("user_id = ?", userID).Find(&repositories).Error; err != nil {
+	repositories, err := services.RepositoryService.ListRepositories(userID)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch repositories"})
 		return
 	}
@@ -91,10 +80,11 @@ func ListRepositories(c *gin.Context) {
 	var response []models.RepositoryResponse
 	for _, repo := range repositories {
 		response = append(response, models.RepositoryResponse{
-			ID:        repo.ID,
-			RepoName:  repo.RepoName,
-			RepoURL:   repo.RepoURL,
-			CreatedAt: repo.CreatedAt,
+			ID:         repo.ID,
+			RepoName:   repo.RepoName,
+			RepoBranch: repo.RepoBranch,
+			RepoURL:    repo.RepoURL,
+			CreatedAt:  repo.CreatedAt,
 		})
 	}
 
@@ -112,18 +102,19 @@ func GetRepository(c *gin.Context) {
 		return
 	}
 
-	var repository models.Repository
-	if err := database.DB.Where("id = ? AND user_id = ?", repoID, userID).First(&repository).Error; err != nil {
+	repository, err := services.RepositoryService.GetRepository(userID, repoID)
+	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Repository not found"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"repository": models.RepositoryResponse{
-			ID:        repository.ID,
-			RepoName:  repository.RepoName,
-			RepoURL:   repository.RepoURL,
-			CreatedAt: repository.CreatedAt,
+			ID:         repository.ID,
+			RepoName:   repository.RepoName,
+			RepoBranch: repository.RepoBranch,
+			RepoURL:    repository.RepoURL,
+			CreatedAt:  repository.CreatedAt,
 		},
 	})
 }
@@ -138,35 +129,13 @@ func UpdateRepository(c *gin.Context) {
 	}
 
 	var req models.UpdateRepositoryRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err := c.ShouldBind(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
-	// 验证仓库
-	owner, repo, err := services.GithubService.ValidateRepository(req.RepoURL, "")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// 更新仓库信息
-	updates := map[string]interface{}{
-		"repo_name": owner + "/" + repo,
-		"repo_url":  req.RepoURL,
-	}
-
-	result := database.DB.Model(&models.Repository{}).
-		Where("id = ? AND user_id = ?", repoID, userID).
-		Updates(updates)
-
-	if result.Error != nil {
+	if err := services.RepositoryService.UpdateRepository(userID, repoID, req.RepoURL); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update repository"})
-		return
-	}
-
-	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Repository not found"})
 		return
 	}
 

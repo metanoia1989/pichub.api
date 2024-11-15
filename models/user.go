@@ -14,7 +14,7 @@ type UserBaseInfo struct {
 	DeletedAt *time.Time `json:"deleted_at"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
-	Status    uint8      `json:"status"`
+	Status    uint8      `json:"status" gorm:"default:0"`
 }
 
 // user 表结构

@@ -5,13 +5,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"pichub.api/controllers"
+	"pichub.api/infra/logger"
 	"pichub.api/routers/middleware"
 )
 
 // RegisterRoutes add all routing list here automatically get main router
 func RegisterRoutes(route *gin.Engine) {
 	route.NoRoute(func(ctx *gin.Context) {
-		ctx.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": "Route Not Found"})
+		ctx.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "error": "Route Not Found"})
 	})
 	route.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"live": "ok"}) })
 
@@ -48,9 +49,10 @@ func RegisterRoutes(route *gin.Engine) {
 
 			repo := protected.Group("/repositories")
 			{
-				repo.POST("/", controllers.AddRepository)
+				logger.Infof("Registering repository routes\n")
 				repo.GET("/", controllers.ListRepositories)
 				repo.GET("/:id", controllers.GetRepository)
+				repo.POST("/", controllers.AddRepository)
 				repo.POST("/:id", controllers.UpdateRepository)
 				repo.POST("/:id/init", controllers.InitRepository)
 			}

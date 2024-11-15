@@ -5,11 +5,13 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"pichub.api/infra/logger"
 	"pichub.api/pkg/jwt"
 )
 
 func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		logger.Infof("=== Auth middleware triggered for path: %s ===\n", c.Request.URL.Path)
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})

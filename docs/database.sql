@@ -19,6 +19,7 @@ CREATE TABLE pic_repositories (
     user_id INT NOT NULL COMMENT '仓库所属用户',
     repo_name VARCHAR(255) NOT NULL COMMENT '仓库名称',
     repo_url VARCHAR(255) NOT NULL COMMENT '仓库链接',
+    repo_branch VARCHAR(50) NOT NULL DEFAULT 'master' COMMENT '仓库分支'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX `idx_user_repo` (`user_id`, `repo_url`)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"pichub.api/models"
+	"pichub.api/pkg/validator"
 	"pichub.api/routers/middleware"
 	"pichub.api/services"
 )
@@ -27,7 +28,7 @@ func UpdateUserProfile(c *gin.Context) {
 
 	var req models.UpdateProfileRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
@@ -70,7 +71,7 @@ func UpdateGithubToken(c *gin.Context) {
 	var req models.UpdateGithubTokenRequest
 	if err := c.ShouldBind(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
+			"error": validator.TranslateErr(err),
 		})
 		return
 	}
@@ -94,7 +95,7 @@ func SendEmailVerification(c *gin.Context) {
 
 	var req models.SendEmailVerificationRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
@@ -114,7 +115,7 @@ func UpdateEmail(c *gin.Context) {
 
 	var req models.UpdateEmailRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request: " + err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 
