@@ -11,10 +11,14 @@ cmd = "go build -o ./tmp/app/engine main.go"
 # Binary file yields from `cmd`.
 bin = "/tmp/app"
 
+
 # Customize binary.
 # This is how you start to run your application. Since my application will works like CLI, so to run it, like to make a CLI call.
 full_bin = "./tmp/app/engine http"
+
+
 # This log file places in your tmp_dir.
+# 设置日志输出
 log = "air_errors.log"
 # Watch these filename extensions.
 include_ext = ["go", "yaml",".env"]
@@ -22,6 +26,10 @@ include_ext = ["go", "yaml",".env"]
 exclude_dir = ["tmp"]
 # It's not necessary to trigger build each time file changes if it's too frequent.
 delay = 500 # ms
+
+# 关键：设置输出不缓存
+send_interrupt = true
+kill_delay = "0s"
 
 [log]
 # Show log time
