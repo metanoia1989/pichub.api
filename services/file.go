@@ -1,22 +1,19 @@
 package services
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
-	"image"
 	_ "image/gif"  // 注册GIF格式
 	_ "image/jpeg" // 注册JPEG格式
 	_ "image/png"  // 注册PNG格式
 	"io"
 	"mime/multipart"
 	"path/filepath"
-	"strings"
 
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
 	"pichub.api/infra/database"
 	"pichub.api/models"
+	"pichub.api/pkg/utils"
 )
 
 type FileServiceImpl struct{}
@@ -41,11 +38,10 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 
 	// 计算文件哈希值
 	src.Seek(0, 0)
-	hash := md5.New()
-	if _, err := io.Copy(hash, src); err != nil {
+	hashValue, err := utils.CalculateGitHash(src, file.Size)
+	if err != nil {
 		return nil, err
 	}
-	hashValue := hex.EncodeToString(hash.Sum(nil))
 
 	// 如果不是强制上传，检查文件是否已存在
 	if !isForce {
@@ -57,7 +53,7 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 
 	// 检测文件类型
 	kind, _ := filetype.Match(buf[:n])
-	fileType := determineFileType(kind)
+	fileType := utils.DetermineFileType(kind)
 
 	// 生成唯一文件名
 	ext := filepath.Ext(file.Filename)
@@ -73,10 +69,10 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 	}
 
 	// 构建文件路径
-	filePath := buildFilePath(filename)
+	filePath := utils.BuildFilePath(filename)
 
 	// 上传文件到GitHub
-	if err := GithubService.UploadFile(repo.RepoURL, filePath, src); err != nil {
+	if err := GithubService.UploadFile(userID, repo.RepoURL, filePath, src); err != nil {
 		return nil, err
 	}
 
@@ -85,7 +81,7 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 		RepoID:      repoID,
 		UserID:      userID,
 		Filename:    filename,
-		URL:         buildFileURL(repo.RepoURL, filePath),
+		URL:         utils.BuildFileURL(repo.RepoURL, filePath),
 		HashValue:   hashValue,
 		RawFilename: file.Filename,
 		Filesize:    uint(file.Size),
@@ -95,7 +91,7 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 
 	// 如果是图片，获取尺寸信息
 	if fileType == 1 {
-		if width, height, err := getImageDimensions(src); err == nil {
+		if width, height, err := utils.GetImageDimensions(src); err == nil {
 			fileRecord.Width = uint(width)
 			fileRecord.Height = uint(height)
 		}
@@ -107,48 +103,4 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 	}
 
 	return fileRecord, nil
-}
-
-// determineFileType 根据文件类型返回对应的类型代码
-func determineFileType(kind types.Type) uint8 {
-	if kind == types.Unknown {
-		return 0
-	}
-
-	switch {
-	case strings.HasPrefix(kind.MIME.Type, "image"):
-		return 1
-	case strings.HasPrefix(kind.MIME.Type, "video"):
-		return 2
-	case strings.HasPrefix(kind.MIME.Type, "audio"):
-		return 3
-	case strings.HasPrefix(kind.MIME.Type, "text"):
-		return 4
-	default:
-		return 5
-	}
-}
-
-// buildFilePath 构建文件存储路径
-func buildFilePath(filename string) string {
-	return fmt.Sprintf("files/%s/%s", filename[:2], filename)
-}
-
-// buildFileURL 构建文件访问URL
-func buildFileURL(repoURL, filePath string) string {
-	return fmt.Sprintf("%s/raw/master/%s", repoURL, filePath)
-}
-
-// getImageDimensions 获取图片尺寸
-func getImageDimensions(file multipart.File) (int, int, error) {
-	// 重置文件指针到开始位置
-	file.Seek(0, 0)
-
-	// 解码图片
-	img, _, err := image.DecodeConfig(file)
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return img.Width, img.Height, nil
 }

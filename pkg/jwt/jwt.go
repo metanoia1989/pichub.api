@@ -30,7 +30,7 @@ func GenerateToken(userID int, username string) (string, error) {
 	// 解析过期时间
 	expireDuration, err := time.ParseDuration(expireStr)
 	if err != nil {
-		expireDuration = 72 * time.Hour // 默认72小时
+		expireDuration = 30 * 24 * time.Hour // 默认30天
 	}
 
 	claims := Claims{

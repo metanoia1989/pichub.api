@@ -49,6 +49,7 @@ func setDefaultConfig() {
 	viper.SetDefault("SERVER_HOST", "0.0.0.0")
 	viper.SetDefault("SERVER_PORT", "8000")
 	viper.SetDefault("SERVER_TIMEZONE", "Asia/Shanghai")
+	viper.SetDefault("GITHUB_DEBUG", false)
 
 	// Redis defaults
 	viper.SetDefault("REDIS_HOST", "localhost")

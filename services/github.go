@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"net/http/httputil"
 	"path/filepath"
 	"strings"
 
 	"github.com/google/go-github/v65/github"
-	"github.com/spf13/viper"
-	"golang.org/x/oauth2"
+	"pichub.api/config"
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
 	"pichub.api/models"
@@ -22,17 +23,54 @@ type GithubServiceImpl struct {
 
 var GithubService = &GithubServiceImpl{}
 
-func (s *GithubServiceImpl) getClient(token string) *github.Client {
-	if token == "" {
-		token = viper.GetString("GITHUB_TOKEN")
+// 方法1：创建一个调试用的 Transport
+type debugTransport struct {
+	t http.RoundTripper
+}
+
+func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// 打印请求信息
+	reqDump, err := httputil.DumpRequestOut(req, true)
+	if err != nil {
+		logger.Errorf("Failed to dump request: %v", err)
+	} else {
+		fmt.Printf("GitHub Request:\n%s\n", string(reqDump))
 	}
 
-	ctx := context.Background()
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-	return github.NewClient(tc)
+	// 执行请求
+	resp, err := d.t.RoundTrip(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// 打印响应信息
+	respDump, err := httputil.DumpResponse(resp, true)
+	if err != nil {
+		logger.Errorf("Failed to dump response: %v", err)
+	} else {
+		fmt.Printf("GitHub Response:\n%s\n", string(respDump))
+	}
+
+	return resp, nil
+}
+
+func (s *GithubServiceImpl) getClient(token string) *github.Client {
+	if config.Config.Server.GithubDebug {
+		// 确保使用调试 Transport
+		httpClient := &http.Client{
+			Transport: &debugTransport{
+				t: http.DefaultTransport,
+			},
+		}
+
+		client := github.NewClient(httpClient)
+		if token != "" {
+			client = client.WithAuthToken(token)
+		}
+		return client
+	}
+
+	return github.NewClient(nil).WithAuthToken(token)
 }
 
 // ValidateRepository 验证仓库是否存在且可访问
@@ -79,7 +117,7 @@ func (s *GithubServiceImpl) InitializeRepository(repo *models.Repository, token 
 
 	// 获取仓库中的所有文件
 	opts := &github.RepositoryContentGetOptions{}
-	_, contents, _, err := client.Repositories.GetContents(ctx, owner, repoName, "", opts)
+	_, contents, _, err := client.Repositories.GetContents(ctx, owner, repoName, "/", opts)
 	if err != nil {
 		return fmt.Errorf("failed to get repository contents: %v", err)
 	}
@@ -109,13 +147,40 @@ func (s *GithubServiceImpl) processContent(ctx context.Context, client *github.C
 			}
 		}
 	} else {
-		// 如果是文件，创建文件记录
+		// 提取相对路径：跳过前四个部分（host/owner/repo/branch）
+		urlParts := strings.Split(*content.DownloadURL, "/")
+		relativePath := strings.Join(urlParts[6:], "/")
+
+		fileType := utils.GetFileType(*content.Name)
+		mime := utils.MimeToString(fileType.MIME)
+		filetypeInt := utils.DetermineFileType(fileType)
+
 		file := &models.File{
 			RepoID:      repo.ID,
 			UserID:      repo.UserID,
 			Filename:    *content.Name,
-			URL:         *content.DownloadURL,
+			URL:         relativePath,
 			RawFilename: *content.Name,
+			HashValue:   *content.SHA,
+			Filesize:    uint(*content.Size),
+			Filetype:    filetypeInt,
+			Mime:        mime,
+		}
+
+		// 检测是否已存在 repoID, userID, filename 相同的文件，如果存在，则更新
+		var existingFile models.File
+		if err := database.DB.Where("repo_id = ? AND user_id = ? AND filename = ?", repo.ID, repo.UserID, file.Filename).First(&existingFile).Error; err == nil {
+			existingFile.HashValue = file.HashValue
+			existingFile.Filesize = file.Filesize
+			existingFile.Filetype = file.Filetype
+			existingFile.Mime = file.Mime
+			existingFile.Width = 0
+			existingFile.Height = 0
+
+			if err := database.DB.Save(&existingFile).Error; err != nil {
+				return fmt.Errorf("failed to update file record: %v", err)
+			}
+			return nil
 		}
 
 		// 保存文件记录
@@ -127,7 +192,7 @@ func (s *GithubServiceImpl) processContent(ctx context.Context, client *github.C
 }
 
 // UploadFile 上传文件到GitHub仓库
-func (s *GithubServiceImpl) UploadFile(repoURL string, remotePath string, file io.Reader) error {
+func (s *GithubServiceImpl) UploadFile(userID int, repoURL string, remotePath string, file io.Reader) error {
 	// 从URL中提取owner和repo名称
 	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
 	owner := parts[len(parts)-2]
@@ -146,7 +211,13 @@ func (s *GithubServiceImpl) UploadFile(repoURL string, remotePath string, file i
 		// Branch:  github.String("main"), // 指定上传分支，可忽略
 	}
 
-	client := s.getClient("")
+	// 获取token
+	token, err := ConfigService.GetGithubToken(userID)
+	if err != nil {
+		return fmt.Errorf("failed to get github token: %v", err)
+	}
+
+	client := s.getClient(token)
 	ctx := context.Background()
 
 	// 上传文件

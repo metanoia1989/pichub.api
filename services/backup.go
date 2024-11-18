@@ -109,7 +109,7 @@ func (s *BackupServiceImpl) uploadToGitHub(repoID int, localPath, remotePath str
 	defer file.Close()
 
 	// 上传到GitHub
-	return GithubService.UploadFile(repo.RepoURL, remotePath, file)
+	return GithubService.UploadFile(repo.UserID, repo.RepoURL, remotePath, file)
 }
 
 // getBackupConfig 获取备份配置

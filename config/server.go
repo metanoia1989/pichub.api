@@ -14,6 +14,7 @@ type ServerConfiguration struct {
 	AllowedHosts         string `mapstructure:"ALLOWED_HOSTS"`
 	LimitCountPerRequest int    `mapstructure:"LIMIT_COUNT_PER_REQUEST"`
 	FrontendUrl          string `mapstructure:"FRONTEND_URL"`
+	GithubDebug          bool   `mapstructure:"GITHUB_DEBUG"`
 }
 
 func (s *ServerConfiguration) ServerConfig() string {
