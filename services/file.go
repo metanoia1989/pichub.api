@@ -43,6 +43,9 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 		return nil, err
 	}
 
+	// 重要：重置文件指针位置
+	src.Seek(0, 0)
+
 	// 如果不是强制上传，检查文件是否已存在
 	if !isForce {
 		var existingFile models.File
@@ -50,6 +53,7 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 			return &existingFile, nil
 		}
 	}
+	// 已存在的，需要手动删除，程序不去处理了
 
 	// 检测文件类型
 	kind, _ := filetype.Match(buf[:n])
@@ -72,16 +76,20 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 	filePath := utils.BuildFilePath(filename)
 
 	// 上传文件到GitHub
+	src.Seek(0, 0)
 	if err := GithubService.UploadFile(userID, repo.RepoURL, filePath, src); err != nil {
 		return nil, err
 	}
+
+	repoPath := repo.GetRepositoryName()
 
 	// 创建文件记录
 	fileRecord := &models.File{
 		RepoID:      repoID,
 		UserID:      userID,
 		Filename:    filename,
-		URL:         utils.BuildFileURL(repo.RepoURL, filePath),
+		URL:         filePath,
+		RepoName:    repoPath,
 		HashValue:   hashValue,
 		RawFilename: file.Filename,
 		Filesize:    uint(file.Size),
@@ -91,6 +99,7 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 
 	// 如果是图片，获取尺寸信息
 	if fileType == 1 {
+		src.Seek(0, 0) // 重置文件指针
 		if width, height, err := utils.GetImageDimensions(src); err == nil {
 			fileRecord.Width = uint(width)
 			fileRecord.Height = uint(height)

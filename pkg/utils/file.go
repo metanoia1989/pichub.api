@@ -8,6 +8,7 @@ import (
 	"io"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"mime/multipart"
 
@@ -137,12 +138,35 @@ func GetFileType(filename string) types.Type {
 
 // BuildFilePath 构建文件存储路径
 func BuildFilePath(filename string) string {
-	return fmt.Sprintf("files/%s/%s", filename[:2], filename)
-}
+	// 获取当前年份
+	year := time.Now().Format("2006")
+	month := time.Now().Format("01")
 
-// BuildFileURL 构建文件访问URL
-func BuildFileURL(repoURL, filePath string) string {
-	return fmt.Sprintf("%s/raw/master/%s", repoURL, filePath)
+	// 获取文件扩展名
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext != "" {
+		ext = ext[1:] // 去掉点号
+	}
+
+	// 根据扩展名确定目录
+	var dir string
+	switch {
+	case ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "gif" || ext == "webp" || ext == "svg":
+		dir = "images"
+	case ext == "mp4" || ext == "avi" || ext == "mov" || ext == "wmv" || ext == "flv" || ext == "mkv":
+		dir = "videos"
+	case ext == "mp3" || ext == "wav" || ext == "ogg" || ext == "m4a" || ext == "flac":
+		dir = "audios"
+	case ext == "pdf" || ext == "doc" || ext == "docx" || ext == "xls" || ext == "xlsx":
+		dir = "documents"
+	case ext == "txt" || ext == "md" || ext == "html" || ext == "css" || ext == "js" || ext == "json" || ext == "xml" || ext == "yaml" || ext == "yml":
+		dir = "text"
+	default:
+		dir = "others"
+	}
+
+	// 构建完整路径: 目录/年份/月份/文件名
+	return filepath.Join(dir, fmt.Sprintf("%s-%s", year, month), filename)
 }
 
 // GetImageDimensions 获取图片尺寸

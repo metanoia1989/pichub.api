@@ -19,7 +19,7 @@ CREATE TABLE pic_repositories (
     user_id INT NOT NULL COMMENT '仓库所属用户',
     repo_name VARCHAR(255) NOT NULL COMMENT '仓库名称',
     repo_url VARCHAR(255) NOT NULL COMMENT '仓库链接',
-    repo_branch VARCHAR(50) NOT NULL DEFAULT 'master' COMMENT '仓库分支'
+    repo_branch VARCHAR(50) NOT NULL DEFAULT 'master' COMMENT '仓库分支',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE INDEX `idx_user_repo` (`user_id`, `repo_url`)
@@ -35,6 +35,7 @@ CREATE TABLE pic_files (
     user_id INT NOT NULL COMMENT '仓库和用户',
     filename VARCHAR(200) NOT NULL COMMENT '文件名称',
     url VARCHAR(255) NOT NULL COMMENT '文件路径',
+    repo_name VARCHAR(50) NULL COMMENT '仓库名 冗余缓存',
     hash_value VARCHAR(200) NULL COMMENT '文件散列值',
     raw_filename VARCHAR(250) NULL COMMENT '文件上传时的原始名称',
     filesize INT UNSIGNED NULL COMMENT '文件大小，单位bit	',
@@ -117,3 +118,10 @@ CREATE TABLE pic_task_run_logs (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  -- 日志记录创建时间
     FOREIGN KEY (task_id) REFERENCES scheduled_tasks(id) ON DELETE CASCADE
 );
+
+
+
+INSERT INTO `pic_config` (`user_id`, `type`, `name`, `value`, `remark`)
+VALUES
+    ('0', 'file', 'cdn_host', 'https://pics.mysticalpower.uk', '文件CDN域名');
+

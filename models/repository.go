@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // repository 表结构
 type Repository struct {
@@ -12,6 +15,14 @@ type Repository struct {
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 	User       User      `json:"user" gorm:"foreignKey:UserID"`
+}
+
+func (r *Repository) GetRepositoryName() string {
+	repoPath := strings.Split(r.RepoURL, "/")
+	if len(repoPath) > 0 {
+		return repoPath[len(repoPath)-1]
+	}
+	return ""
 }
 
 // 其他结构体

@@ -1,10 +1,11 @@
 package services
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"time"
 
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -18,6 +19,13 @@ import (
 type ConfigServiceImpl struct{}
 
 var ConfigService = &ConfigServiceImpl{}
+
+const (
+	// TokenKeyPrefix Redis中GitHub token的key前缀
+	TokenKeyPrefix = "github:token:"
+	// CDNHostKeyPrefix Redis中CDN域名的key前缀
+	CDNHostKeyPrefix = "file:cdn_host:"
+)
 
 // Set 设置配置
 func (s *ConfigServiceImpl) Set(configType, name string, value interface{}, userID int) error {
@@ -116,7 +124,8 @@ func (s *ConfigServiceImpl) GetByType(configType string, userID int) (map[string
 // GetGithubToken 获取用户的GitHub token
 func (s *ConfigServiceImpl) GetGithubToken(userID int) (string, error) {
 	// 先尝试从Redis缓存获取
-	if token, err := GetCachedToken(userID); err == nil {
+	key := fmt.Sprintf("%s%d", TokenKeyPrefix, userID)
+	if token, err := RedisService.Get(context.Background(), key).Result(); err == nil {
 		return token, nil
 	}
 
@@ -130,10 +139,9 @@ func (s *ConfigServiceImpl) GetGithubToken(userID int) (string, error) {
 		return "", errors.New("github token not found")
 	}
 
-	// 设置缓存
-	if err := SetCachedToken(userID, token.(string)); err != nil {
-		// 缓存设置失败只记录日志，不影响返回
-		log.Printf("Failed to cache token: %v", err)
+	// 设置缓存，1小时过期
+	if err := RedisService.Set(context.Background(), key, token.(string), 1*time.Hour).Err(); err != nil {
+		logger.Warnf("Failed to cache token: %v", err)
 	}
 
 	return token.(string), nil
@@ -142,15 +150,50 @@ func (s *ConfigServiceImpl) GetGithubToken(userID int) (string, error) {
 // SetGithubToken 设置用户的GitHub token
 func (s *ConfigServiceImpl) SetGithubToken(userID int, token string) error {
 	// 先更新数据库
-	err := s.Set("github", "token", token, userID)
-	if err != nil {
+	if err := s.Set("github", "token", token, userID); err != nil {
 		return err
 	}
 
-	// 删除旧的缓存
-	if err := DeleteCachedToken(userID); err != nil {
-		// 缓存删除失败只记录日志，不影响返回
-		log.Printf("Failed to delete token cache: %v", err)
+	// 删除缓存
+	key := fmt.Sprintf("%s%d", TokenKeyPrefix, userID)
+	if err := RedisService.Del(context.Background(), key).Err(); err != nil {
+		logger.Warnf("Failed to delete token cache: %v", err)
+	}
+
+	return nil
+}
+
+// GetFileCDNHostname 获取用户的CDN域名
+func (s *ConfigServiceImpl) GetFileCDNHostname(userID int) string {
+	// 尝试从缓存获取
+	key := fmt.Sprintf("%s%d", CDNHostKeyPrefix, userID)
+	if hostname, err := RedisService.Get(context.Background(), key).Result(); err == nil {
+		return hostname
+	}
+
+	// 从配置获取
+	hostname, err := s.Get("file", "cdn_host", userID)
+	if err != nil || utils.IsEmpty(hostname) {
+		return ""
+	}
+
+	// 设置缓存，1小时过期
+	_ = RedisService.Set(context.Background(), key, hostname.(string), 1*time.Hour)
+
+	return hostname.(string)
+}
+
+// SetFileCDNHostname 设置用户的CDN域名
+func (s *ConfigServiceImpl) SetFileCDNHostname(userID int, hostname string) error {
+	// 更新配置
+	if err := s.Set("file", "cdn_host", hostname, userID); err != nil {
+		return err
+	}
+
+	// 删除缓存
+	key := fmt.Sprintf("%s%d", CDNHostKeyPrefix, userID)
+	if err := RedisService.Del(context.Background(), key).Err(); err != nil {
+		logger.Warnf("Failed to delete cdn hostname cache: %v", err)
 	}
 
 	return nil

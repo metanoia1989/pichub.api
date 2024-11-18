@@ -37,7 +37,8 @@ func UploadFile(c *gin.Context) {
 	}
 
 	// 检查是否强制上传
-	isForce := c.PostForm("is_force") == "true"
+	isForceParam := c.PostForm("is_force")
+	isForce := isForceParam == "true" || isForceParam == "1"
 
 	// 处理文件上传
 	uploadedFile, err := services.FileService.UploadFile(file, userID, repoID, isForce)
@@ -46,19 +47,11 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
+	cdnHost := services.ConfigService.GetFileCDNHostname(0)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "File uploaded successfully",
-		"file": models.FileResponse{
-			ID:          uploadedFile.ID,
-			Filename:    uploadedFile.Filename,
-			URL:         uploadedFile.URL,
-			RawFilename: uploadedFile.RawFilename,
-			Filesize:    uploadedFile.Filesize,
-			Width:       uploadedFile.Width,
-			Height:      uploadedFile.Height,
-			Mime:        uploadedFile.Mime,
-			CreatedAt:   uploadedFile.CreatedAt,
-		},
+		"file":    uploadedFile.ToResponse(cdnHost),
 	})
 }
 
@@ -80,18 +73,9 @@ func ListFiles(c *gin.Context) {
 	}
 
 	var response []models.FileResponse
+	cdnHost := services.ConfigService.GetFileCDNHostname(0)
 	for _, file := range files {
-		response = append(response, models.FileResponse{
-			ID:          file.ID,
-			Filename:    file.Filename,
-			URL:         file.URL,
-			RawFilename: file.RawFilename,
-			Filesize:    file.Filesize,
-			Width:       file.Width,
-			Height:      file.Height,
-			Mime:        file.Mime,
-			CreatedAt:   file.CreatedAt,
-		})
+		response = append(response, file.ToResponse(cdnHost))
 	}
 
 	c.JSON(http.StatusOK, gin.H{

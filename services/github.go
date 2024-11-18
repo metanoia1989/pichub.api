@@ -55,22 +55,21 @@ func (d *debugTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func (s *GithubServiceImpl) getClient(token string) *github.Client {
+	logger.Infof("is github debug: %v", config.Config.Server.GithubDebug)
+	httpClient := &http.Client{}
 	if config.Config.Server.GithubDebug {
-		// 确保使用调试 Transport
-		httpClient := &http.Client{
+		httpClient = &http.Client{
 			Transport: &debugTransport{
 				t: http.DefaultTransport,
 			},
 		}
-
-		client := github.NewClient(httpClient)
-		if token != "" {
-			client = client.WithAuthToken(token)
-		}
-		return client
 	}
 
-	return github.NewClient(nil).WithAuthToken(token)
+	client := github.NewClient(httpClient)
+	if token != "" {
+		client = client.WithAuthToken(token)
+	}
+	return client
 }
 
 // ValidateRepository 验证仓库是否存在且可访问
@@ -158,6 +157,7 @@ func (s *GithubServiceImpl) processContent(ctx context.Context, client *github.C
 		file := &models.File{
 			RepoID:      repo.ID,
 			UserID:      repo.UserID,
+			RepoName:    repo.GetRepositoryName(),
 			Filename:    *content.Name,
 			URL:         relativePath,
 			RawFilename: *content.Name,
@@ -173,6 +173,7 @@ func (s *GithubServiceImpl) processContent(ctx context.Context, client *github.C
 			existingFile.HashValue = file.HashValue
 			existingFile.Filesize = file.Filesize
 			existingFile.Filetype = file.Filetype
+			existingFile.RepoName = file.RepoName
 			existingFile.Mime = file.Mime
 			existingFile.Width = 0
 			existingFile.Height = 0
