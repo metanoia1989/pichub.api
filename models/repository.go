@@ -18,7 +18,7 @@ type Repository struct {
 
 type AddRepositoryRequest struct {
 	RepoName   string `json:"repo_name" form:"repo_name" label:"仓库名称" binding:"required"`
-	RepoURL    string `json:"repo_url" form:"repo_url" label:"仓库URL" binding:"required,url"`
+	RepoURL    string `json:"repo_url" form:"repo_url" label:"仓库URL" binding:"required"`
 	RepoBranch string `json:"repo_branch" form:"repo_branch" label:"仓库分支"`
 }
 

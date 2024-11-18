@@ -2,16 +2,17 @@ package logger
 
 import (
 	"bytes"
-	"github.com/sirupsen/logrus"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 var logger = logrus.New()
 
 func init() {
 	logger.Level = logrus.InfoLevel
-	logger.Formatter = &formatter{}
+	logger.SetFormatter(&formatter{})
 
 	logger.SetReportCaller(true)
 }
@@ -77,6 +78,7 @@ func (f *formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	sb.WriteString(" ")
 	sb.WriteString(f.prefix)
 	sb.WriteString(entry.Message)
+	sb.WriteString("\n") // Add a newline at the end of each log entry
 
 	return sb.Bytes(), nil
 }

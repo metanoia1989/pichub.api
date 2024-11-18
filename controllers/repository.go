@@ -15,7 +15,7 @@ import (
 
 // AddRepository 添加新的GitHub仓库
 func AddRepository(c *gin.Context) {
-	logger.Infof("Received request body: %v", c.Request.Body)
+	logger.Infof("Received request body: %v\n", c.Request.Body)
 	userID, _ := middleware.GetCurrentUser(c)
 
 	var req models.AddRepositoryRequest

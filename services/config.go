@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
 	"pichub.api/infra/database"
 	"pichub.api/infra/logger"
 	"pichub.api/models"
+	"pichub.api/pkg/utils"
 	"pichub.api/repository"
 )
 
@@ -35,8 +37,7 @@ func (s *ConfigServiceImpl) Set(configType, name string, value interface{}, user
 	}
 
 	var config models.Config
-	err := database.DB.Where("type = ? AND name = ? AND user_id = ?", configType, name, userID).First(&config).Error
-	if err != nil {
+	if err := database.DB.Where("type = ? AND name = ? AND user_id = ?", configType, name, userID).First(&config).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 创建新记录
 			config = models.Config{
@@ -45,14 +46,20 @@ func (s *ConfigServiceImpl) Set(configType, name string, value interface{}, user
 				Name:   name,
 				Value:  valueStr,
 			}
-			return repository.Save(&config).(error)
+			logger.Infof("Create config: %v", config)
+			if err := repository.Save(&config); err != nil {
+				return err
+			}
 		}
-		return err
+		return errors.New(err.Error())
 	}
 
 	// 更新现有记录
 	config.Value = valueStr
-	return database.DB.Save(&config).Error
+	if err := database.DB.Save(&config).Error; err != nil {
+		return err
+	}
+	return nil
 }
 
 // Get 获取配置
@@ -104,4 +111,47 @@ func (s *ConfigServiceImpl) GetByType(configType string, userID int) (map[string
 	}
 
 	return configMap, nil
+}
+
+// GetGithubToken 获取用户的GitHub token
+func (s *ConfigServiceImpl) GetGithubToken(userID int) (string, error) {
+	// 先尝试从Redis缓存获取
+	if token, err := GetCachedToken(userID); err == nil {
+		return token, nil
+	}
+
+	// 缓存不存在，从数据库获取
+	token, err := s.Get("github", "token", userID)
+	if err != nil {
+		return "", err
+	}
+
+	if utils.IsEmpty(token) {
+		return "", errors.New("github token not found")
+	}
+
+	// 设置缓存
+	if err := SetCachedToken(userID, token.(string)); err != nil {
+		// 缓存设置失败只记录日志，不影响返回
+		log.Printf("Failed to cache token: %v", err)
+	}
+
+	return token.(string), nil
+}
+
+// SetGithubToken 设置用户的GitHub token
+func (s *ConfigServiceImpl) SetGithubToken(userID int, token string) error {
+	// 先更新数据库
+	err := s.Set("github", "token", token, userID)
+	if err != nil {
+		return err
+	}
+
+	// 删除旧的缓存
+	if err := DeleteCachedToken(userID); err != nil {
+		// 缓存删除失败只记录日志，不影响返回
+		log.Printf("Failed to delete token cache: %v", err)
+	}
+
+	return nil
 }

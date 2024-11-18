@@ -11,7 +11,9 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 	"pichub.api/infra/database"
+	"pichub.api/infra/logger"
 	"pichub.api/models"
+	"pichub.api/pkg/utils"
 )
 
 type GithubServiceImpl struct {
@@ -34,7 +36,7 @@ func (s *GithubServiceImpl) getClient(token string) *github.Client {
 }
 
 // ValidateRepository 验证仓库是否存在且可访问
-func (s *GithubServiceImpl) ValidateRepository(repoURL string, token string) (owner, repo string, err error) {
+func (s *GithubServiceImpl) ValidateRepository(repoURL string, token string, branch string) (owner, repo string, err error) {
 	// 从URL中提取owner和repo名称
 	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
 	if len(parts) < 2 {
@@ -47,10 +49,20 @@ func (s *GithubServiceImpl) ValidateRepository(repoURL string, token string) (ow
 	client := s.getClient(token)
 	ctx := context.Background()
 
+	logger.Infof("ValidateRepository %s %s", owner, repo)
+
 	// 检查仓库是否存在
 	_, _, err = client.Repositories.Get(ctx, owner, repo)
 	if err != nil {
 		return "", "", fmt.Errorf("repository not found or not accessible")
+	}
+
+	// 检查分支是否存在
+	if branch != "" {
+		_, _, err = client.Repositories.GetBranch(ctx, owner, repo, branch, 3)
+		if err != nil {
+			return "", "", fmt.Errorf("branch '%s' not found or not accessible: %v", branch, err)
+		}
 	}
 
 	return owner, repo, nil
@@ -170,4 +182,12 @@ func (s *GithubServiceImpl) ValidateToken(token string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *GithubServiceImpl) GetToken(userID int) (string, error) {
+	token, err := ConfigService.Get("github", "token", userID)
+	if err != nil || utils.IsEmpty(token) {
+		return "", fmt.Errorf("请先配置 github token")
+	}
+	return token.(string), nil
 }

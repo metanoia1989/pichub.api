@@ -11,3 +11,8 @@ func If[T any](condition bool, trueVal, falseVal T) T {
 	}
 	return falseVal
 }
+
+// 判断值是否为空
+func IsEmpty(value interface{}) bool {
+	return value == "" || value == nil || value == 0 || value == false
+}

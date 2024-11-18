@@ -46,7 +46,7 @@ func Register(c *gin.Context) {
 func Login(c *gin.Context) {
 	var req models.LoginRequest
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": validator.TranslateErr(err)})
 		return
 	}
 

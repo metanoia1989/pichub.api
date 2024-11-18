@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"pichub.api/config"
+)
 
 // config 表结构
 type Config struct {
@@ -14,6 +18,6 @@ type Config struct {
 	UpdatedAt time.Time `gorm:"column:updated_at"`
 }
 
-// func (Config) TableName() string {
-// 	return "config"
-// }
+func (Config) TableName() string {
+	return config.Config.Database.Prefix + "config"
+}

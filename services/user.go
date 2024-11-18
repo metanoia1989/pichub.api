@@ -12,6 +12,7 @@ import (
 	"pichub.api/infra/database"
 	"pichub.api/models"
 	"pichub.api/pkg/jwt"
+	"pichub.api/pkg/utils"
 )
 
 type UserServiceImpl struct{}
@@ -123,7 +124,7 @@ func (s *UserServiceImpl) HasGithubToken(userID int) (bool, error) {
 	}
 
 	// 验证 github token 是否有效
-	if githubToken == "" {
+	if utils.IsEmpty(githubToken) {
 		return false, errors.New("github token is not set")
 	}
 
