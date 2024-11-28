@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"path/filepath"
+	"strings"
 
 	"github.com/h2non/filetype"
 	"github.com/h2non/filetype/types"
@@ -112,4 +113,35 @@ func (s *FileServiceImpl) UploadFile(file *multipart.FileHeader, userID int, rep
 	}
 
 	return fileRecord, nil
+}
+
+// DeleteFile 删除文件
+func (s *FileServiceImpl) DeleteFile(fileID, userID int) error {
+	// 查找文件记录
+	var file models.File
+	if err := database.DB.Where("id = ? AND user_id = ?", fileID, userID).First(&file).Error; err != nil {
+		return fmt.Errorf("file not found or no permission")
+	}
+
+	// 获取仓库信息
+	var repo models.Repository
+	if err := database.DB.First(&repo, file.RepoID).Error; err != nil {
+		return fmt.Errorf("repository not found")
+	}
+
+	// 从GitHub删除文件
+	err := GithubService.DeleteFile(userID, repo.RepoURL, file.URL)
+	if err != nil {
+		// 如果是404错误，直接继续删除数据库记录
+		if !strings.Contains(err.Error(), "404") {
+			return fmt.Errorf("failed to delete file from GitHub: %v", err)
+		}
+	}
+
+	// 删除数据库记录
+	if err := database.DB.Delete(&file).Error; err != nil {
+		return fmt.Errorf("failed to delete file record: %v", err)
+	}
+
+	return nil
 }

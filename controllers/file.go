@@ -82,3 +82,23 @@ func ListFiles(c *gin.Context) {
 		"files": response,
 	})
 }
+
+// DeleteFile 删除文件
+func DeleteFile(c *gin.Context) {
+	userID, _ := middleware.GetCurrentUser(c)
+
+	// 获取文件ID
+	fileID, err := strconv.Atoi(c.PostForm("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file ID"})
+		return
+	}
+
+	// 验证文件所有权并删除
+	if err := services.FileService.DeleteFile(fileID, userID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "File deleted successfully"})
+}

@@ -263,3 +263,40 @@ func (s *GithubServiceImpl) GetToken(userID int) (string, error) {
 	}
 	return token.(string), nil
 }
+
+// DeleteFile 从GitHub仓库删除文件
+func (s *GithubServiceImpl) DeleteFile(userID int, repoURL string, remotePath string) error {
+	// 从URL中提取owner和repo名称
+	parts := strings.Split(strings.TrimSuffix(repoURL, "/"), "/")
+	owner := parts[len(parts)-2]
+	repo := parts[len(parts)-1]
+
+	// 获取token
+	token, err := s.GetToken(userID)
+	if err != nil {
+		return fmt.Errorf("failed to get github token: %v", err)
+	}
+
+	client := s.getClient(token)
+	ctx := context.Background()
+
+	// 获取文件的当前SHA
+	content, _, _, err := client.Repositories.GetContents(ctx, owner, repo, remotePath, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get file info: %v", err)
+	}
+
+	// 准备删除文件的参数
+	opts := &github.RepositoryContentFileOptions{
+		Message: github.String(fmt.Sprintf("Delete file: %s", filepath.Base(remotePath))),
+		SHA:     github.String(*content.SHA),
+	}
+
+	// 删除文件
+	_, _, err = client.Repositories.DeleteFile(ctx, owner, repo, remotePath, opts)
+	if err != nil {
+		return fmt.Errorf("failed to delete file from GitHub: %v", err)
+	}
+
+	return nil
+}

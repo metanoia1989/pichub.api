@@ -60,8 +60,9 @@ func RegisterRoutes(route *gin.Engine) {
 			// 在 protected 路由组中添加
 			files := protected.Group("/files")
 			{
-				files.POST("/upload", controllers.UploadFile)
 				files.GET("/", controllers.ListFiles)
+				files.POST("/upload", controllers.UploadFile)
+				files.POST("/delete", controllers.DeleteFile)
 			}
 		}
 
