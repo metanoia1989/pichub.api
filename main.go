@@ -45,7 +45,10 @@ func main() {
 
 	// 设置路由
 	router := routers.SetupRoute()
-	logger.Fatalf("%v", router.Run(config.Server.ServerConfig()))
+	router.Static("/static", "./static")
+	if err := router.Run(config.Server.ServerConfig()); err != nil {
+		logger.Fatalf("Failed to start HTTP server: %v", err)
+	}
 
 	// 启动定时任务
 	// services.SchedulerService.StartScheduler()

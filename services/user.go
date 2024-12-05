@@ -72,13 +72,18 @@ func (s *UserServiceImpl) Register(req models.RegisterRequest) (*models.User, er
 
 func (s *UserServiceImpl) Login(req models.LoginRequest) (string, *models.User, error) {
 	var user models.User
-	if err := database.DB.Where("username = ?", req.Username).First(&user).Error; err != nil {
+	if err := database.DB.Where("username = ? or email = ?", req.Username, req.Username).First(&user).Error; err != nil {
 		return "", nil, errors.New("user not found")
 	}
 
 	// 验证密码
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
 		return "", nil, errors.New("invalid password")
+	}
+
+	// 是否激活
+	if user.Status == UserStatusInactive {
+		return "", nil, errors.New("account not activated")
 	}
 
 	// 生成 JWT token

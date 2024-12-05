@@ -55,6 +55,7 @@ func RegisterRoutes(route *gin.Engine) {
 				repo.POST("/", controllers.AddRepository)
 				repo.POST("/:id", controllers.UpdateRepository)
 				repo.POST("/:id/init", controllers.InitRepository)
+				repo.POST("/:id/delete", controllers.DeleteRepository)
 			}
 
 			// 在 protected 路由组中添加
@@ -62,6 +63,7 @@ func RegisterRoutes(route *gin.Engine) {
 			{
 				files.GET("/", controllers.ListFiles)
 				files.POST("/upload", controllers.UploadFile)
+				files.POST("/uploadStream/:repo_id", controllers.UploadStream)
 				files.POST("/delete", controllers.DeleteFile)
 			}
 		}

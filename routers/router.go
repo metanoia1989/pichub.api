@@ -11,7 +11,6 @@ import (
  * 初始化 gin 实例，然后注册路由
  */
 func SetupRoute() *gin.Engine {
-
 	environment := viper.GetBool("APP_DEBUG")
 	if environment {
 		logger.Infof("Setting gin mode to DebugMode")

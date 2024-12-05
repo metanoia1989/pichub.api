@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload with Fetch</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+</head>
+<body>
+    <h1>Upload File</h1>
+    <input type="file" id="fileInput">
+    <button id="uploadButton">Upload</button>
+    <progress id="progressBar" value="0" max="100" style="width: 100%;"></progress>
+    <div id="status"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#uploadButton').click(async function() {
+                const fileInput = document.getElementById('fileInput');
+                if (!fileInput.files.length) {
+                    alert('Please select a file to upload');
+                    return;
+                }
+
+                const file = fileInput.files[0];
+                const contentLength = file.size;
+                let loadedBytes = 0;
+
+                const stream = file.stream().pipeThrough(
+                    new TransformStream({
+                        transform(chunk, controller) {
+                            loadedBytes += chunk.length;
+                            const progress = (loadedBytes / contentLength) * 100;
+                            $('#progressBar').val(progress);
+                            controller.enqueue(chunk);
+                        }
+                    })
+                );
+
+                const formData = new FormData();
+                formData.append('file', new Blob([await new Response(stream).blob()], { type: file.type }), file.name);
+
+                const response = await fetch('http://localhost:8080/upload', {
+                    method: 'POST',
+                    // headers: { 
+                    //     'Content-Type': 'multipart/form-data'  // Let the browser handle this, no need to set it manually
+                    // },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const responseData = await response.text();
+                    $('#status').text(responseData);
+                } else {
+                    $('#status').text('Error uploading file: ' + response.statusText);
+                }
+            });
+        });
+    </script>
+
+    <h3>后端代码展示</h3>
+    <pre style="transform: scale(0.8); transform-origin: top left;">
+    <code class="language-go">
+package main
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	router := gin.Default()
+
+	router.Use(CORSMiddleware())
+
+	router.POST("/upload", func(c *gin.Context) {
+		file, header, err := c.Request.FormFile("file")
+		if err != nil {
+			c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
+			return
+		}
+		defer file.Close()
+
+		// Create uploads directory if not exists
+		if _, err := os.Stat("./uploads"); os.IsNotExist(err) {
+			os.Mkdir("./uploads", os.ModePerm)
+		}
+
+		out, err := os.Create("./uploads/" + header.Filename)
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("create file err: %s", err.Error()))
+			return
+		}
+		defer out.Close()
+
+		_, err = io.Copy(out, file)
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("write file err: %s", err.Error()))
+			return
+		}
+
+		c.String(http.StatusOK, fmt.Sprintf("File %s uploaded successfully.", header.Filename))
+	})
+
+	router.Run(":8080")
+}
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		ctx.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		ctx.Writer.Header().Set("Access-Control-Max-Age", "86400")
+		ctx.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE, UPDATE")
+		ctx.Writer.Header().Set("Access-Control-Allow-Headers", "*")
+		ctx.Writer.Header().Set("Access-Control-Expose-Headers", "Content-Length")
+		ctx.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		ctx.Writer.Header().Set("Cache-Control", "no-cache")
+
+		if ctx.Request.Method == "OPTIONS" {
+			ctx.AbortWithStatus(200)
+		} else {
+			ctx.Next()
+		}
+	}
+}
+    </code></pre>
+
+</body>
+</html>

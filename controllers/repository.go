@@ -143,3 +143,20 @@ func UpdateRepository(c *gin.Context) {
 		"message": "Repository updated successfully",
 	})
 }
+
+// DeleteRepository 删除仓库
+func DeleteRepository(c *gin.Context) {
+	userID, _ := middleware.GetCurrentUser(c)
+	repoID, err := strconv.Atoi(c.PostForm("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
+		return
+	}
+
+	if err := services.RepositoryService.DeleteRepository(userID, repoID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete repository"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Repository deleted successfully"})
+}

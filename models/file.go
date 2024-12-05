@@ -57,3 +57,7 @@ func (f *File) ToResponse(cdnHost string) FileResponse {
 		CreatedAt:   f.CreatedAt,
 	}
 }
+
+func (f *File) GetFileURL(cdnHost string) string {
+	return fmt.Sprintf("%s/%s/%s", cdnHost, f.RepoName, f.URL)
+}

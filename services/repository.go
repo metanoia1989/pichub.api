@@ -113,3 +113,13 @@ func (s *repositoryService) UpdateRepository(userID int, repoID int, repoURL str
 
 	return nil
 }
+
+func (s *repositoryService) DeleteRepository(userID int, repoID int) error {
+	// 先删除文件
+	if err := database.DB.Where("repo_id = ? and user_id = ?", repoID, userID).Delete(&models.File{}).Error; err != nil {
+		return err
+	}
+
+	// 再删除仓库
+	return database.DB.Where("id = ? AND user_id = ?", repoID, userID).Delete(&models.Repository{}).Error
+}

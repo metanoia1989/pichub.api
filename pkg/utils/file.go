@@ -1,11 +1,13 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
 	"image"
 	"io"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
@@ -176,6 +178,33 @@ func GetImageDimensions(file multipart.File) (int, int, error) {
 
 	// 解码图片
 	img, _, err := image.DecodeConfig(file)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return img.Width, img.Height, nil
+}
+
+// GetImageDimensionsFromURL 从URL获取图片尺寸
+func GetImageDimensionsFromURL(url string) (int, int, error) {
+	// 发起HTTP请求
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer resp.Body.Close()
+
+	// 读取响应体到内存
+	imageData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	// 创建一个bytes.Reader
+	imageReader := bytes.NewReader(imageData)
+
+	// 解码图片
+	img, _, err := image.DecodeConfig(imageReader)
 	if err != nil {
 		return 0, 0, err
 	}
