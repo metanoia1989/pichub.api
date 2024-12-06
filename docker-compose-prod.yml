@@ -1,8 +1,8 @@
-version: "3.8"
+version: "3.3"
 
 services:
   server:
-    container_name: go_server
+    container_name: pichub.api
     build:
       context: .
       dockerfile: Dockerfile
@@ -12,3 +12,6 @@ services:
       - DB_HOST=host.docker.internal
       - REDIS_HOST=host.docker.internal
     restart: on-failure
+    dns:
+      - 8.8.8.8
+      - 114.114.114.114
