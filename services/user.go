@@ -87,7 +87,7 @@ func (s *UserServiceImpl) Login(req models.LoginRequest) (string, *models.User, 
 	}
 
 	// 生成 JWT token
-	token, err := jwt.GenerateToken(user.ID, user.Username)
+	token, err := jwt.GenerateToken(user.ID, user.Username, int(user.UserType))
 	if err != nil {
 		return "", nil, err
 	}

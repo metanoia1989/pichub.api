@@ -38,6 +38,7 @@ func AuthRequired() gin.HandlerFunc {
 		// 将用户信息存储到上下文中
 		c.Set("user_id", claims.UserID)
 		c.Set("username", claims.Username)
+		c.Set("is_admin", claims.UserType == 1)
 
 		c.Next()
 	}
@@ -50,4 +51,8 @@ func GetCurrentUser(c *gin.Context) (int, bool) {
 		return 0, false
 	}
 	return userID.(int), true
+}
+
+func IsAdmin(c *gin.Context) bool {
+	return c.GetBool("is_admin")
 }

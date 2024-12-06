@@ -66,6 +66,14 @@ func RegisterRoutes(route *gin.Engine) {
 				files.POST("/uploadStream/:repo_id", controllers.UploadStream)
 				files.POST("/delete", controllers.DeleteFile)
 			}
+
+			config := protected.Group("/config")
+			{
+				config.GET("/all", controllers.GetAllConfig)
+				config.POST("/create", controllers.CreateConfig)
+				config.POST("/update", controllers.UpdateConfig)
+				config.POST("/delete/:id", controllers.DeleteConfig)
+			}
 		}
 
 		// 其他的公开路由

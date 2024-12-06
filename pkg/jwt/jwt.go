@@ -11,6 +11,7 @@ import (
 type Claims struct {
 	UserID   int    `json:"user_id"`
 	Username string `json:"username"`
+	UserType int    `json:"user_type"`
 	jwt.RegisteredClaims
 }
 
@@ -22,7 +23,7 @@ func NewNumericDate(t time.Time) *jwt.NumericDate {
 type RegisteredClaims = jwt.RegisteredClaims
 
 // GenerateToken 生成JWT token
-func GenerateToken(userID int, username string) (string, error) {
+func GenerateToken(userID int, username string, userType int) (string, error) {
 	// 从配置中获取 JWT 密钥和过期时间
 	secret := []byte(viper.GetString("JWT_SECRET"))
 	expireStr := viper.GetString("JWT_EXPIRE")
@@ -36,6 +37,7 @@ func GenerateToken(userID int, username string) (string, error) {
 	claims := Claims{
 		UserID:   userID,
 		Username: username,
+		UserType: userType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireDuration)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -39,10 +39,11 @@ func AddRepository(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Repository added successfully",
 		"repository": models.RepositoryResponse{
-			ID:        repository.ID,
-			RepoName:  repository.RepoName,
-			RepoURL:   repository.RepoURL,
-			CreatedAt: repository.CreatedAt,
+			ID:         repository.ID,
+			RepoName:   repository.RepoName,
+			RepoURL:    repository.RepoURL,
+			RepoBranch: repository.RepoBranch,
+			CreatedAt:  repository.CreatedAt,
 		},
 	})
 }
@@ -147,7 +148,7 @@ func UpdateRepository(c *gin.Context) {
 // DeleteRepository 删除仓库
 func DeleteRepository(c *gin.Context) {
 	userID, _ := middleware.GetCurrentUser(c)
-	repoID, err := strconv.Atoi(c.PostForm("id"))
+	repoID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repository ID"})
 		return
