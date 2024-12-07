@@ -27,10 +27,11 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Also copy config yml file
 COPY --from=builder /app/main .
-COPY --from=builder /app/.env.example .env
+COPY --from=builder /app/.env.production .env 
+# 复制生产环境配置文件
 
 # Expose port 8080 to the outside world
-EXPOSE 8000
+EXPOSE 4100
 
 #Command to run the executable
 CMD ["./main"]
