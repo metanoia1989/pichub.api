@@ -22,3 +22,23 @@ $ curl http://localhost:8000/health
 $ go build main.go 
 $ ./main
 ```
+
+
+# 部署 
+```sh
+# 创建网络 
+docker network create --driver bridge --subnet=172.20.0.0/16 --gateway=172.20.0.1 docker20
+
+# mysql 数据库允许 172.20.0.1 访问 
+# redis bind 127.0.0.1 172.20.0.1 
+# 防火墙设置 172.17.0.0/12 允许访问 6379,3306 端口 
+
+$ cp .env.production .env 
+# 然后修改 数据库密码等等 
+
+# 启动 
+$ make production 
+
+# 关闭
+$ make clean 
+```

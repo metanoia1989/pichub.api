@@ -27,7 +27,7 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage. Also copy config yml file
 COPY --from=builder /app/main .
-COPY --from=builder /app/.env.production .env 
+COPY --from=builder /app/.env .env 
 # 复制生产环境配置文件
 
 # Expose port 8080 to the outside world
