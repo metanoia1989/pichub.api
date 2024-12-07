@@ -18,12 +18,8 @@ services:
     extra_hosts:
       - host.docker.internal:host-gateway
     networks:
-      - go_network
+      - docker20
 
 networks:
-  go_network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/24
-          gateway: 172.20.0.1
+  docker20:
+    external: true
