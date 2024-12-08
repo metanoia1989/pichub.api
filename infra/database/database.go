@@ -39,7 +39,7 @@ func DbConnection() error {
 	})
 
 	if err != nil {
-		log.Fatalf("Db connection error")
+		log.Fatalf("Db connection error: %v", err)
 		return err
 	}
 	DB = db
