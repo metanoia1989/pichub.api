@@ -20,9 +20,10 @@ func SetupRoute() *gin.Engine {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	allowedHosts := viper.GetString("ALLOWED_HOSTS")
 	router := gin.New()
-	router.SetTrustedProxies([]string{allowedHosts})
+	// allowedHosts := viper.GetString("ALLOWED_HOSTS")
+	// router.SetTrustedProxies([]string{allowedHosts})
+	router.SetTrustedProxies([]string{"0.0.0.0/0", "::/0"})
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middleware.CORSMiddleware())
