@@ -2,7 +2,7 @@
 FROM golang:1.22.4-alpine as builder
 
 # Install git.
-RUN apk update && apk add --no-cache git
+RUN apk update && apk add --no-cache git tzdata
 
 # Working directory
 WORKDIR /app
