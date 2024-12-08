@@ -2,9 +2,8 @@
 FROM golang:1.22.4-alpine as builder
 
 # Install git.
-RUN apk update && apk add --no-cache git tzdata
+RUN apk update && apk add --no-cache git 
 
-ENV TZ=Asia/Shanghai
 
 # Working directory
 WORKDIR /app
@@ -23,7 +22,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o main .
 
 # Start a new stage from scratch
 FROM alpine:latest
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates tzdata
+ENV TZ=Asia/Shanghai
 
 WORKDIR /root/
 
