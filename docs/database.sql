@@ -47,7 +47,7 @@ CREATE TABLE pic_files (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     index `idx_user_id` (`user_id`),
     index `idx_repo_id` (`repo_id`),
-    unique index `url` (`url`)
+    unique index `idx_file` (`url`, `repo_name`)
 )
 ENGINE=InnoDB 
 DEFAULT CHARSET=utf8mb4 
