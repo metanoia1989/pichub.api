@@ -32,4 +32,20 @@ echo "配置文件: ${TARGET_DIR}/.env"
 # 显示使用说明
 echo ""
 echo "运行方式："
-echo "cd ${TARGET_DIR} && ./${APP_NAME}" 
+echo "cd ${TARGET_DIR} && ./${APP_NAME}"
+
+# 添加 PM2 部署命令
+echo "正在使用 PM2 部署..."
+if pm2 list | grep -q "pichub-api"; then
+    pm2 reload pichub-api
+else
+    pm2 start ecosystem.config.js
+fi
+
+echo "部署完成！"
+echo ""
+echo "PM2 管理命令："
+echo "查看状态: pm2 status"
+echo "查看日志: pm2 logs pichub-api"
+echo "停止服务: pm2 stop pichub-api"
+echo "重启服务: pm2 restart pichub-api" 
