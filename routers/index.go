@@ -14,11 +14,12 @@ func RegisterRoutes(route *gin.Engine) {
 	route.NoRoute(func(ctx *gin.Context) {
 		ctx.JSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "error": "Route Not Found"})
 	})
-	route.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"live": "ok"}) })
 
 	// API v1 路由组
 	v1 := route.Group("/api/v1")
 	{
+		v1.GET("/health", func(ctx *gin.Context) { ctx.JSON(http.StatusOK, gin.H{"live": "ok"}) })
+
 		// 公开路由
 		auth := v1.Group("/auth")
 		{
@@ -50,9 +51,9 @@ func RegisterRoutes(route *gin.Engine) {
 			repo := protected.Group("/repositories")
 			{
 				logger.Infof("Registering repository routes\n")
-				repo.GET("/", controllers.ListRepositories)
+				repo.GET("", controllers.ListRepositories)
 				repo.GET("/:id", controllers.GetRepository)
-				repo.POST("/", controllers.AddRepository)
+				repo.POST("", controllers.AddRepository)
 				repo.POST("/:id", controllers.UpdateRepository)
 				repo.POST("/:id/init", controllers.InitRepository)
 				repo.POST("/:id/delete", controllers.DeleteRepository)
@@ -61,7 +62,7 @@ func RegisterRoutes(route *gin.Engine) {
 			// 在 protected 路由组中添加
 			files := protected.Group("/files")
 			{
-				files.GET("/", controllers.ListFiles)
+				files.GET("", controllers.ListFiles)
 				files.POST("/upload", controllers.UploadFile)
 				files.POST("/uploadStream/:repo_id", controllers.UploadStream)
 				files.POST("/delete", controllers.DeleteFile)
