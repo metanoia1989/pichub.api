@@ -80,7 +80,7 @@ func (s *repositoryService) GetRepository(userID int, repoID int) (*models.Repos
 	return &repository, nil
 }
 
-func (s *repositoryService) UpdateRepository(userID int, repoID int, repoURL string, repoBranch string) error {
+func (s *repositoryService) UpdateRepository(userID int, repoID int, repoName string, repoURL string, repoBranch string) error {
 	// 验证仓库
 	token, err := ConfigService.GetGithubToken(userID)
 	if err != nil {
@@ -88,15 +88,16 @@ func (s *repositoryService) UpdateRepository(userID int, repoID int, repoURL str
 	}
 
 	repoBranch = utils.If(repoBranch == "", constants.DefaultRepoBranch, repoBranch)
-	owner, repo, err := GithubService.ValidateRepository(repoURL, token, repoBranch)
+	_, _, err = GithubService.ValidateRepository(repoURL, token, repoBranch)
 	if err != nil {
 		return err
 	}
 
 	// 更新仓库信息
 	updates := map[string]interface{}{
-		"repo_name": owner + "/" + repo,
-		"repo_url":  repoURL,
+		"repo_name":   repoName,
+		"repo_url":    repoURL,
+		"repo_branch": repoBranch,
 	}
 
 	result := database.DB.Model(&models.Repository{}).

@@ -135,7 +135,7 @@ func UpdateRepository(c *gin.Context) {
 		return
 	}
 
-	if err := services.RepositoryService.UpdateRepository(userID, repoID, req.RepoURL, req.RepoBranch); err != nil {
+	if err := services.RepositoryService.UpdateRepository(userID, repoID, req.RepoName, req.RepoURL, req.RepoBranch); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update repository"})
 		return
 	}
